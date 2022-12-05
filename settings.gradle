@@ -1,4 +1,4 @@
-rootProject.name = 'template-sample'
+rootProject.name = 'redis-sample'
 
 include "bom"
 

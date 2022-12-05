@@ -1,5 +1,5 @@
 [[java]]
-= Java
+= Redis 指南
 
 ****
 作者网页:
@@ -13,4 +13,6 @@ https://www.jcohy.com[*https://www.jcohy.com/projects*]
 
 [horizontal]
 
-<<legal#legal,Legal>> :: 版权信息.
+<<overview#nosql-overview,Nosql 概述>> :: Nosql 概述.
+
+<<redis#nosql-redis,Redis 指南>> :: Redis 指南.
