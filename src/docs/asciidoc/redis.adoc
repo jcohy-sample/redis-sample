@@ -41,7 +41,7 @@ image::img/redis02.jpeg[]
 
 {study-url}/linux/htmlsingle/index.html#linux-install-redis[Redis 安装]
 
-[[nosql-redis-command]]
+[[nosql-redis7]]
 == Redis 7 新特性
 
 大体和之前的 redis 版本保持一致和稳定，主要是自身底层性能和资源利用率上的优化和提高，如果你生产上系统稳定，不用着急升级到最新的 redis7 版本。
@@ -90,24 +90,6 @@ LIST (列表)增加 LMPOP、BLMPOP ，从提供的键名列表中的第一个非
 HyperLogLog 改进：在 Redis5.0 中，HyperLogLog 算法得到改进，优化了计数统计时的内存使用效率，Redis 7 更加优秀更好的内存统计报告
 |===
 
-
-[[nosql-redis-command]]
-== Redis 常用命令
-
-* redis-benchmark  redis性能测试
-* redis 默认安装了 `16` 个库,角标是 [0-15],默认数据库为0...select命令切换数据库
-* dbsize: 查看当前数据库的 `key` 的数量
-* keys *: 显示当前库的所有 `key`
-* set key value:设置键值对
-* mset key1 value1 ...:同时设置一个或多个键值对
-* get key:获取key的值
-* mget key1 ...: 同时获取多个键值对
-* del key:删除ket
-* setex key second value: 设置key的过期时间和值
-* FLUSHALL,FLUSHDB:删除所有库,删除当前库.
-* http://redisdoc.com/[Redis常用命令]
-
-
 [[nosql-redis-data-type]]
 == Redis 的十大数据类型
 
@@ -133,33 +115,353 @@ image::img/redis03.jpeg[]
 * string 类型是二进制安全的.意思是 redis 的 string 可以包含任何数据.比如 jpg 图片或者序列化的对象 .
 * string 类型是 Redis 最基本的数据类型,一个 redis 中字符串 value 最多可以是 `512M`
 
+[[nosql-redis-data-type-list]]
+=== list
+
+* Redis 列表是简单的字符串列表,按照插入顺序排序.你可以添加一个元素导列表的头部(左边)或者尾部(右边).
+* 它的底层实际是个双端链表，最多可以包含 2^32 - 1 个元素 (4294967295, 每个列表超过40亿个元素).
+
 [[nosql-redis-data-type-hash]]
 === hash
 
 * Redis hash 是一个键值对集合.
 * Redis hash 是一个 string 类型的 field 和 value 的映射表,hash 特别适合用于存储对象.
+* Redis 中每个 hash 可以存储 2^32 - 1 键值对（40多亿）
 * 类似 Java 里面的 `Map<String,Object>`
-
-[[nosql-redis-data-type-list]]
-=== list
-
-* Redis 列表是简单的字符串列表,按照插入顺序排序.你可以添加一个元素导列表的头部(左边)或者尾部(右边).
-* 它的底层实际是个链表.
 
 [[nosql-redis-data-type-set]]
 === set
 
-* Redis的Set是string类型的无序集合.它是通过HashTable实现实现的,
+* Redis 的 Set 是 String 类型的无序集合。集合成员是唯一的，这就意味着集合中不能出现重复的数据，集合对象的编码可以是 intset 或者 hashtable。
+* Redis 中 Set 集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1)。
+* 集合中最大的成员数为 2^32 - 1 (4294967295, 每个集合可存储40多亿个成员)
 
 [[nosql-redis-data-type-zset]]
 === zset(sorted set: 有序集合)
 
-* Redis zset 和 set 一样也是string类型元素的集合,且不允许重复的成员.不同的是每个元素都会关联一个 double 类型的分数.
-* Redis 正是通过分数来为集合中的成员进行从小到大的排序.zset的成员是唯一的,但分数(score)却可以重复.
+* Redis zset 和 set 一样也是 string 类型元素的集合,且不允许重复的成员。 不同的是每个元素都会关联一个 double 类型的分数，redis 正是通过分数来为集合中的成员进行从小到大的排序。
+* zset 的成员是唯一的,但分数(score)却可以重复。
+* zset 集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1)。 集合中最大的成员数为 2^32 - 1
 
+[[nosql-redis-data-type-geo]]
+=== GEO
+
+* Redis GEO 主要用于存储地理位置信息，并对存储的信息进行操作，包括
+** 添加地理位置的坐标。
+** 获取地理位置的坐标。
+** 计算两个位置之间的距离。
+** 根据用户给定的经纬度坐标来获取指定范围内的地理位置集合
+
+[[nosql-redis-data-type-hyperloglog]]
+=== HyperLogLog
+
+* HyperLogLog 是用来做基数统计的算法，HyperLogLog 的优点是，在输入元素的数量或者体积非常非常大时，计算基数所需的空间总是固定且是很小的。
+* 在 Redis 里面，每个 HyperLogLog 键只需要花费 12 KB 内存，就可以计算接近 2^64 个不同元素的基 数。这和计算基数时，元素越多耗费内存就越多的集合形成鲜明对比。
+* 但是，因为 HyperLogLog 只会根据输入元素来计算基数，而不会储存输入元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。
+
+[[nosql-redis-data-type-bitmap]]
+=== bitmap
+
+image::img/redis04.jpeg[]
+
+* 由 0 和 1 状态表现的二进制位的 bit 数组
+
+[[nosql-redis-data-type-bitfield]]
+=== bitfield
+
+* 通过 bitfield 命令可以一次性操作多个比特位域(指的是连续的多个比特位)，它会执行一系列操作并返回一个响应数组，这个数组中的元素对应参数列表中的相应操作的执行结果。
+* 说白了就是通过 bitfield 命令我们可以一次性对多个比特位域进行操作。
+
+[[nosql-redis-data-type-stream]]
+=== Stream
+
+* Redis Stream 是 Redis 5.0 版本新增加的数据结构。
+* Redis Stream 主要用于消息队列（MQ，Message Queue），Redis 本身是有一个 Redis 发布订阅 (pub/sub) 来实现消息队列的功能，但它有个缺点就是消息无法持久化，如果出现网络断开、Redis 宕机等，消息就会被丢弃。
+* 简单来说发布订阅 (pub/sub) 可以分发消息，但无法记录历史消息。
+* 而 Redis Stream 提供了消息的持久化和主备复制功能，可以让任何客户端访问任何时刻的数据，并且能记住每一个客户端的访问位置，还能保证消息不丢失
+
+[[nosql-redis-command]]
+== Redis 常用命令
+
+image::img/redis05.jpeg[]
+
+* redis-benchmark  redis 性能测试
+* redis 默认安装了 `16` 个库,角标是 [0-15],默认数据库为 0. `select` 命令切换数据库
+* set key value:设置键值对
+* keys *: 显示当前库的所有 `key`
+* exists key: 判断某个key是否存在
+* dbsize: 查看当前数据库的 `key` 的数量
+* type key: 查看你的 key 是什么类型
+* get key:获取 key 的值
+* del key:删除 ket
+* unlink key: 非阻塞删除，仅仅将keys从keyspace元数据中删除，真正的删除会在后续异步中操作。
+* ttl key: 查看还有多少秒过期，`-1` 表示永不过期，`-2` 表示已过期
+* expire key 秒钟: 为给定的 key 设置过期时间
+* move key dbindex【0-15】：将当前数据库的 key 移动到给定的数据库 db 当中
+* select dbindex：切换数据库【0-15】，默认为0
+* mset key1 value1 ...:同时设置一个或多个键值对
+* mget key1 ...: 同时获取多个键值对
+* setex key second value: 设置 key 的过期时间和值
+* flushdb：删除当前库.
+* flushall：删除所有库
+* https://redis.io/commands/[Redis 常用命令] 或 http://www.redis.cn/commands.html[Redis 常用命令（中文）]
+
+NOTE:: 命令不区分大小写，而 key 是区分大小写的. 永远的帮助命令，`help @类型`，例如 `help @string`，`help @list`，`help @hash`，`help @hyperloglog`.
+
+[[nosql-redis-persistence]]
+== Redis 的持久化
+
+[[nosql-redis-persistence-rdb]]
+=== RDB（Redis DataBase）
+
+RDB（Redis Database）：RDB 持久性以指定的时间间隔执行数据集的时间点快照。实现类似照片记录效果的方式，就是把某一时刻的数据和状态以文件的形式写到磁盘上，也就是快照。这样一来即使故障宕机，快照文件也不会丢失，数据的可靠性也就得到了保证。
+这个快照文件就称为 RDB 文件(`dump.rdb`)。
+
+* 在指定的时间间隔内将内存中的数据集快照写入磁盘, 也就是行话讲的 Snapshot 快照,它恢复时是将快照文件直接读到内存里
+* Redis 会单独创建(fork)一个子进程来进行持久化,会先将数据写入到 一个临时文件中,待持久化过程都结束了,再用这个临时文件替换上次持久化好的文件. 整个过程中,主进程是不进行任何 IO 操作的,这就确保了极高的性能.
+* Redis的数据都在内存中，保存备份时它执行的是 **全量快照**， 也就是说，把内存中的所有数据都记录到磁盘中，如果需要进行大规模数据的恢复,且对于数据恢复的完整性不是非常敏感,那 RDB 方式要比 AOF 方式更加的高效.RDB 的缺点是最后一次持久化后的数据可能丢失.
+* fork 的作用是复制一个与当前进程一样的进程.新进程的所有数据(变量、环境变量、程序计数器等) 数值都和原进程一致,但是是一个全新的进程,并作为原进程的子进程.
+
+====  文件
+
+rdb 保存的是 dump.rdb 文件
+
+image::img/redis06.jpeg[]
+
+====  配置
+
+redis 的配置文件中的 SNAPSHOTTING 快照配置.详情参照 <<nosql-redis-conf-snapshotting>>
+
+====  如何触发 RDB 快照
+
+===== 自动触发
+
+* redis 的配置文件中的 SNAPSHOTTING 快照配置.详情参照 <<nosql-redis-conf-snapshotting>>
+
+===== NOTE:: 不可以把备份文件 `dump.rdb` 和生产 redis 服务器放在同一台机器，必须分开各自存储， 以防生产机物理损坏后备份文件也挂了。
+
+手动触发：通过 `save` 和 `bgsave` 命令
+
+* save: 在主程序中执⾏会阻塞当前 redis 服务器，直到持久化工作完成 执行 save 命令期间，Redis 不能处理其他命令，**线上禁止使用**
+* bgsave: Redis 会在后台异步进行快照操作,快照同时还可以响应客户端请求.可以通过 `lastsave`.命令获取最后一次成功执行快照的时间.
+
+===== `flushall`/`flushdb`
+
+* 执行 `flushall`/`flushdb` 命令,也会产生 `dump.rdb` 文件,但里面是空的,无意义.
+
+===== 执行 shutdown 且没有设置开启 AOF 持久化
+
+===== 主从复制时，主节点自动触发
+
+NOTE:: Redis 默认采用 BGSAVE 的方式
+
+==== 恢复数据
+
+将备份文件 (dump.rdb) 移动到 redis 安装目录并启动服务即可。CONFIG GET dir 获取目录.
+
+====  优势
+
+* 适合大规模的数据恢复.
+* 按照业务定时备份
+* 对数据完整性和一致性要求不高.
+* RDB 文件在内存中的加载速度要比 AOF 快得多
+
+====  劣势
+
+* 在一定间隔时间做一次备份,所以如果 redis 意外 down 掉的话,就会丢失最后一次快照后的所有修改.
+* 内存数据的全量同步，如果数据量太大会导致 I/0 严重影响服务器性能
+* RDB依赖于主进程的 fork，在更大的数据集中，这可能会导致服务请求的瞬间延迟。 fork 的时候内存中的数据被克隆了一份，大致 2 倍的膨胀性，需要考虑
+
+====  停止
+
+动态所有停止 RDB 保存规则的方法: redis-cli config set save ""
+
+快照禁用: 通过配置文件
+
+image::img/redis07.jpeg[]
+
+==== 总结
+
+image::img/redis08.jpeg[]
+
+[[nosql-redis-persistence-aof]]
+=== AOF（Append Only File）
+
+以日志的形式来记录每个写操作，将Redis执行过的所有写指令记录下来(读操作不记录)， 只许追加文件但不可以改写文件，redis 启动之初会读取该文件重新构建数据，换言之，redis
+重启的话就根据日志文件的内容将写指令从前到后执行一次以完成数据的恢复工作。
+
+默认情况下，redis 是没有开启 AOF(append only file) 的。 开启 AOF 功能需要设置配置：`appendonly yes`
+
+AOF 保存的是 `appendonly.aof` 文件
+
+==== 配置
+
+image::img/aof07.jpeg[]
+
+详情参考 <<nosql-redis-conf-appendonlymode>>
+
+* AOF 文件-保存路径:
++
+Redis 6 之前：AOF 保存文件的位置和 RDB 保存文件的位置一样， 都是通过 `redis.conf` 配置文件的 `dir` 配置
++
+Redis 7 之后添加 `appenddirname` 配置。最终路径为 `dir + appenddirname`
++
+image::img/aof03.jpeg[]
+
+* AOF 文件 - 保存名称
++
+Redis 6 之前,有且只有一个文件。
++
+Redis 7 新增 Multi Part AOF 的设计。
++
+image::img/aof04.jpeg[]
++
+image::img/aof05.jpeg[]
+
+==== 工作流程
+
+image::img/aof01.jpeg[]
+
+. Client 作为命令的来源，会有多个源头以及源源不断的请求命令。
+. 在这些命令到达 Redis Server 以后并不是直接写入 AOF 文件，会将其这些命令先放入 AOF 缓存中进行保存。这里的 AOF 缓冲区实际上是内存中的一片区域，
+存在的目的是当这些命令达到一定量以后再写入磁盘，避免频繁的磁盘 IO 操作。
+. AOF 缓冲会根据 AOF 缓冲区同步文件的三种写回策略将命令写入磁盘上的 AOF 文件。
+. 随着写入 AOF 内容的增加为避免文件膨胀，会根据规则进行命令的合并(又称 AOF 重写)，从而起到 AOF 文件压缩的目的。
+. 当 Redis Server 服务器重启的时候会从 AOF 文件载入数据。
+
+三种写回策略（appendfsync）：
+
+* always：同步写回，每个写命令执行完立刻同步地将日志写回磁盘
+* everysec（默认）：每秒写回，每个写命令执行完，只是先把日志写到 AOF 文件的内存缓冲区，每隔 1 秒把缓冲区中的内容写入磁盘
+* no：操作系统控制的写回，每个写命令执行完，只是先把日志写到AOF文件的内存缓冲区，由操作系统决定何时将缓冲区内容写回磁盘
+
+image::img/aof02.jpeg[]
+
+==== 恢复
+
+正常恢复：启用 AOF，修改默认的 `appendonly no`，改为 `yes`。 当写入数据时，会自动生产 `aof` 文件，Redis 在启动时会自动加载
+
+异常恢复：可以使用 `redis-check-aof --fix` 进行修复。然后再进行恢复。
+
+==== 优势
+
+* 更好的保护数据不丢失 、性能高、可做紧急恢复
+
+==== 劣势
+
+* 相同数据集的数据而言 aof 文件要远大于 rdb 文件，恢复速度慢于 rdb
+* aof 运行效率要慢于 rdb,每秒同步策略效率较好，不同步效率和 rdb 相同
+
+==== AOF 重写机制
+
+由于 AOF 持久化是 Redis 不断将写命令记录到 AOF 文件中，随着 Redis 不断的进行，AOF 的文件会越来越大， 文件越大，占用服务器内存越大以及 AOF 恢复要求时间越长。
+
+为了解决这个问题，Redis 新增了重写机制，当 AOF 文件的大小超过所设定的峰值时，Redis 就会自动启动 AOF 文件的内容压缩， 只保留可以恢复数据的最小指令集或者可以手动使用命令 `bgrewriteaof` 来重写。
+
+可以通过 `auto-aof-rewrite-percentage` 和 `auto-aof-rewrite-min-size` 配置，也可以使用客户端向服务器发送 `bgrewriteaof` 命令来触发重写机制。
+
+
+image::img/aof06.jpeg[]
+
+* 重写原理
+. 在重写开始前，redis 会创建一个“重写子进程”，这个子进程会读取现有的 AOF 文件，并将其包含的指令进行分析压缩并写入到一个临时文件中。
+. 与此同时，主进程会将新接收到的写指令一边累积到内存缓冲区中，一边继续写入到原有的 AOF 文件中，这样做是保证原有的 AOF 文件的可用性，避免在重写过程中出现意外。
+. 当“重写子进程”完成重写工作后，它会给父进程发一个信号，父进程收到信号后就会将内存中缓存的写指令追加到新 AOF 文件中
+. 当追加结束后，redis 就会用新 AOF 文件来代替旧 AOF 文件，之后再有新的写指令，就都会追加到新的 AOF 文件中
+. 重写 AOF 文件的操作，并没有读取旧的 AOF 文件，而是将整个内存中的数据库内容用命令的方式重写了一个新的 AOF 文件，这点和快照有点类似
+
+==== 总结
+
+image::img/aof08.jpeg[]
+
+=== RDB-AOF 混合持久化
+
+在同时开启 RDB 和 AOF 持久化时，重启时只会加载 AOF 文件，不会加载 RDB 文件。
+
+1 开启混合方式设置
+设置 `aof-use-rdb-preamble` 的值为 `yes`   yes 表示开启，设置为 no 表示禁用
+2 RDB+AOF 的混合方式---------> 结论：RDB 镜像做全量持久化，AOF 做增量持久化
+先使用 RDB 进行快照存储，然后使用 AOF 持久化记录所有的写操作，当重写策略满足或手动触发重写的时候，将最新的数据存储为新的 RDB 记录。这样的话，
+重启服务的时候会从 RDB 和 AOF 两部分恢复数据，既保证了数据完整性，又提高了恢复数据的性能。简单来说：混合持久化方式产生的文件一部分是 RDB 格式，一部分是 AOF 格式。
+
+AOF 包括了 RDB 头部 + AOF 混写
+
+=== 纯缓存模式
+
+同时关闭 RDB+AOF
+
+* 禁用 rdb 持久化模式下，我们仍然可以使用命令 save、bgsave 生成 rdb 文件
+* 禁用 aof 持久化模式下，我们仍然可以使用命令 bgrewriteaof 生成 aof 文件
+
+[[nosql-redis-transaction]]
+== Redis 事务
+
+Redis 事务：可以一次执行多个命令，本质是一组命令的集合。一个事务中的所有命令都会序列化，按顺序地串行化执行而不会被其它命令插入，不许加塞
+
+=== Redis 事务 VS 数据库事务
+
+* 单独的隔离操作：Redis 的事务仅仅是保证事务里的操作会被连续独占的执行，redis 命令执行是单线程架构，在执行完事务内所有指令前是不可能再去同时执行其他客户端的请求的
+* 没有隔离级别的概念：因为事务提交前任何指令都不会被实际执行，也就不存在”事务内的查询要看到事务里的更新，在事务外查询不能看到”这种问题了
+* 不保证原子性：Redis 的事务不保证原子性，也就是不保证所有指令同时成功或同时失败，只有决定是否开始执行全部指令的能力，没有执行到一半进行回滚的能力
+* 排它性：Redis 会保证一个事务内的命令依次执行，而不会被其它命令插入
+
+* MULTI：开启，以 `MULTI` 开始一个事务
+* 入队，将多个命令入队到事务中，接到这些命令并不会立即执行， 而是放到等待执行的事务队列里面
+* EXEC：执行，由 `EXEC` 命令触发事务
+* DISCARD：放弃事务，放弃事务执行块内的所有命令
+* WATCH：监听一个或多个 key，`WATCH` 命令是一种乐观锁的实现，Redis 在修改的时候会检测数据是否被更改，如果更改了，则执行失败
+* UNWATCH：取消 `WATCH` 命令对所有 key 的监视
+
+NOTE:: 一旦执行了 exec， 之前加的监控锁都会被取消掉了。当客户端连接丢失的时候(比如退出链接)，所有东西都会被取消监视
+
+
+[[nosql-redis-pipelining]]
+== Redis 管道
+
+Redis 是一种基于客户端-服务端模型以及请求/响应协议的 TCP 服务。一个请求会遵循以下步骤：
+
+. 客户端向服务端发送命令分四步(发送命令→命令排队→命令执行→返回结果)，并监听Socket返回，通常以阻塞模式等待服务端响应。
+. 服务端处理命令，并将结果返回给客户端。
+
+上述两步称为：Round Trip Time(简称 RTT,数据包往返于两端的时间)，如下：
+
+image::img/pipelining01.jpeg[]
+
+如果同时需要执行大量的命令，那么就要等待上一条命令应答后再执行，这中间不仅仅多了RTT（Round Time Trip），而且还频繁调用系统 IO，发送网络请求，同时需要 redis 调用多次 `read()` 和 `write()` 系统方法，
+系统方法会将数据从用户态转移到内核态，这样就会对进程上下文有比较大的影响了，性能不太好。
+
+管道(pipeline)可以一次性发送多条命令给服务端，服务端依次处理完完毕后，通过一条响应一次性将结果返回，
+通过减少客户端与 redis 的通信次数来实现降低往返延时时间。pipeline 实现的原理是队列，先进先出特性就保证数据的顺序性。
+
+image::img/pipelining02.jpeg[]
+
+定义：Pipeline 是为了解决 RTT 往返回时，仅仅是将命令打包一次性发送， 对整个 Redis 的执行不造成其它任何影响。
+
+批处理命令变种优化措施，类似 Redis 的原生批命令(`mget` 和 `mset`)
+
+=== 总结
+
+Pipeline 与原生批量命令对比:: 原生批量命令是原子性(例如:mset, mget)，pipeline 是非原子性
++
+原生批量命令一次只能执行一种命令，pipeline 支持批量执行不同命令
++
+原生批命令是服务端实现，而 pipeline 需要服务端与客户端共同完成
+
+Pipeline 与事务对比:: 事务具有原子性，管道不具有原子性
++
+管道一次性将多条命令发送到服务器，事务是一条一条的发，事务只有在接收到 exec 命令后才会执行，管道不会
++
+执行事务时会阻塞其他命令的执行，而执行管道中的命令时不会
+
+.使用 Pipeline 注意事项
+[NOTE]
+====
+* pipeline 缓冲的指令只是会依次执行，不保证原子性，如果执行中指令发生异常，将会继续执行后续的指令
+* 使用 pipeline 组装的命令个数不能太多，不然数据量过大客户端阻塞的时间可能过久，同时服务端此时也被迫回复一个队列答复，占用很多内存
+====
 
 [[nosql-redis-conf]]
-== Redis配置文件(redis.conf)
+== Redis 配置文件(redis.conf)
 
 [[nosql-redis-conf-units]]
 === units 单位
@@ -219,16 +521,23 @@ image::img/redis03.jpeg[]
 | 参数 | 描述
 
 | save 900 1
+
 save 300 10
-save 60 10000 | RDB是整个内存的压缩过的Snapshot,RDB的数据结构,可以配置复合的快照触发条件,默认 是1分钟内改了1万次,或5分钟内改了10次,或15分钟内改了1次.如果想禁用 RDB 持久化的策略,只要不设置任何 save 指令,或者给 save 传入一个空字符串参数也可以
+
+save 60 10000 | RDB 是整个内存的压缩过的 Snapshot,RDB 的数据结构,可以配置复合的快照触发条件,默认 是 1 分钟内改了 1 万次,或 5 分钟内改了 10 次,或 15 分钟内改了 1 次.
+如果想禁用 RDB 持久化的策略,只要不设置任何 save 指令,或者给 save 传入一个空字符串参数也可以
+
+| save 3600 1 300 100 60 10000 | Redis 7 中新的格式以及默认值。
 
 | stop-writes-on-bgsave-error yes | 当 RDB 持久化出现错误后, 是否依然进行继续进行工作, yes: 不能进行工作, no: 可以继续进行工作, 可以通过 info 中的 `rdb_last_bgsave_status` 了解 RDB 持久化是否有错误
 
-| rdbcompression yes | 对于存储到磁盘中的快照,可以设置是否进行压缩存储.如果是的话,redis会采用 LZF算法进行压缩.如果你不想消耗CPU来进行压缩的话,可以设置为关闭此功能.
+| rdbcompression yes | 对于存储到磁盘中的快照,可以设置是否进行压缩存储.如果是的话,redis 会采用 LZF 算法进行压缩.如果你不想消耗 CPU 来进行压缩的话,可以设置为关闭此功能.
 
 | rdbchecksum yes | 在存储快照后,还可以让 redis 使用 CRC64 算法来进行数据校验,但是这样做会增加大约 10% 的性能消耗,如果希望获取到最大的性能提升,可以关闭此功能.
 
-| dbfilename dump.rdb  | rdb文件的名称
+| rdb-del-sync-files no | 在没有持久性的情况下删除复制中使用的 RDB 文件启用。默认情况下 no，此选项是禁用的。
+
+| dbfilename dump.rdb  | rdb 文件的名称
 
 | dir ./  | 数据目录, 数据库的写入会在这个目录. rdb、aof文件也会写在这个目录
 |===
@@ -345,13 +654,13 @@ noeviction: 不移除任何 key, 只是返回一个写错误.
 
 | appendfilename "appendonly.aof" | aof文件名
 
-| appendfsync everysec | aof持久化策略的配置
+| appendfsync everysec | aof 持久化策略的配置
 
 no: 表示不执行fsync, 由操作系统保证数据同步到磁盘, 速度最快.
 
-always: 表示每次写入都执行fsync, 以保证数据同步到磁盘.
+always: 表示每次写入都执行 fsync, 以保证数据同步到磁盘.
 
-everysec: 表示每秒执行一次fsync, 可能会导致丢失这1s数据.
+everysec: 表示每秒执行一次 fsync, 可能会导致丢失这1s数据.
 
 | no-appendfsync-on-rewrite no | 在 aof 重写或者写入 rdb 文件的时候, 会执行大量IO, 此时对于 everysec 和 always 的 aof 模式来说, 执行 fsync 会造成阻塞过长时间, `no-appendfsync-on-rewrite` 字段设置为默认设置为 `no`.
 如果对延迟要求很高的应用, 这个字段可以设置为 `yes`, 否则还是设置为 `no`, 这样对持久化特性来说这是更安全的选择. 设置为 `yes` 表示 rewrite 期间对新写操作不 fsync,暂时存在内存中,等 rewrite 完成后再写入, 默认为 `no`, 建议 `yes`. Linux的默认 fsync 策略是 `30` 秒. 可能丢失 `30` 秒数据.
@@ -498,59 +807,3 @@ A 参数 g$lshzxe 的别名
 | aof-rewrite-incremental-fsync yes  | 在 aof 重写的时候, 如果打开了 `aof-rewrite-incremental-fsync` 开关, 系统会每 `32MB` 执行一次 fsync. 这对于把文件写入磁盘是有帮助的, 可以避免过大的延迟峰值.
 |===
 
-[[nosql-redis-persistence]]
-== Redis 的持久化
-
-[[nosql-redis-persistence-rdb]]
-=== RDB
-
-==== 概述
-
-在指定的时间间隔内将内存中的数据集快照写入磁盘, 也就是行话讲的Snapshot快照,它恢复时是将快照文件直接读到内存里
-
-Redis会单独创建(fork)一个子进程来进行持久化,会先将数据写入到 一个临时文件中,待持久化过程都结束了,再用这个临时文件替换上次持久化好的文件. 整个过程中,主进程是不进行任何IO操作的,这就确保了极高的性能.
-
-如果需要进行大规模数据的恢复,且对于数据恢复的完整性不是非常敏感,那RDB方 式要比AOF方式更加的高效.RDB的缺点是最后一次持久化后的数据可能丢失.
-
-fork的作用是复制一个与当前进程一样的进程.新进程的所有数据(变量、环境变量、程序计数器等) 数值都和原进程一致,但是是一个全新的进程,并作为原进程的子进程.
-
-====  文件
-
-rdb 保存的是 dump.rdb文件
-
-====  配置
-
-redis的配置文件中的SNAPSHOTTING快照配置.详情参照 <<nosql-redis-conf-snapshotting>>
-
-====  如何触发RDB快照
-
-* redis的配置文件中的SNAPSHOTTING快照配置.详情参照 <<nosql-redis-conf-snapshotting>>
-
-冷拷贝后重新使用
-
-* 命令 save 或者是 bgsave
-
-Save: save时只管保存,其它不管,全部阻塞.
-
-BGSAVE: Redis 会在后台异步进行快照操作,快照同时还可以响应客户端请求.可以通过 lastsave.命令获取最后一次成功执行快照的时间.
-
-* 执行flushall命令,也会产生dump.rdb文件,但里面是空的,无意义.
-
-
-==== 恢复数据
-
-将备份文件 (dump.rdb) 移动到 redis 安装目录并启动服务即可.CONFIG GET dir 获取目录.
-
-====  优势
-
-*  适合大规模的数据恢复.
-*  对数据完整性和一致性要求不高.
-
-====  劣势
-
-*  在一定间隔时间做一次备份,所以如果redis意外down掉的话,就会丢失最后一次快照后的所有修改.
-*  fork的时候,内存中的数据被克隆了一份,大致2倍的膨胀性需要考虑.
-
-====  停止
-
-动态所有停止RDB保存规则的方法: redis-cli config set save ""
