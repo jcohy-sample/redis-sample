@@ -414,7 +414,6 @@ Redis 事务：可以一次执行多个命令，本质是一组命令的集合�
 
 NOTE:: 一旦执行了 exec， 之前加的监控锁都会被取消掉了。当客户端连接丢失的时候(比如退出链接)，所有东西都会被取消监视
 
-
 [[nosql-redis-pipelining]]
 == Redis 管道
 
@@ -459,6 +458,204 @@ Pipeline 与事务对比:: 事务具有原子性，管道不具有原子性
 * pipeline 缓冲的指令只是会依次执行，不保证原子性，如果执行中指令发生异常，将会继续执行后续的指令
 * 使用 pipeline 组装的命令个数不能太多，不然数据量过大客户端阻塞的时间可能过久，同时服务端此时也被迫回复一个队列答复，占用很多内存
 ====
+
+[[nosql-redis-subpub]]
+== Redis 发布订阅
+
+Redis 可以实现消息中间件 MQ 的功能，通过发布订阅实现消息的引导和分流。
+
+=== 缺点
+
+* 发布的消息在Redis系统中不能持久化，因此，必须先执行订阅，再等待消息发布。如果先发布了消息，那么该消息由于没有订阅者，消息将被直接丢弃
+* 消息只管发送对于发布者而言消息是即发即失的，不管接收，也没有ACK机制，无法保证消息的消费成功。
+* 以上的缺点导致 Redis 的 Pub/Sub 模式就像个小玩具，在生产环境中几乎无用武之地，为此 Redis5.0 版本新增了 Stream 数据结构，不但支持多播，还支持数据持久化，相比 Pub/Sub 更加的强大
+
+NOTE:: 不推荐使用该功能，专业的事情交给专业的中间件处理，redis 就做好分布式缓存功能
+
+[[nosql-redis-replica]]
+== Redis 复制(replica)
+
+Redis 复制，就是主从复制，master 以写为主，Slave 以读为主，当 master 数据变化的时候，自动将新的数据异步同步到其它 slave 数据库，主要有以下特点：
+
+* 读写分离
+* 容灾恢复
+* 数据备份
+* 水平扩容支撑高并发
+
+NOTE:: master 如果配置了 `requirepass` 参数，需要密码登陆，那么 slave 就要配置 `masterauth` 来设置校验密码， 否则的话 master 会拒绝 slave 的访问请求
+
+=== 配置
+
+<<nosql-redis-conf-replication>>
+
+=== 主要命令
+
+* info replication：可以查看复制节点的主从关系和配置信息
+* replicaof 主库IP 主库端口：一般写入进 `redis.conf` 配置文件内
+* slaveof 主库IP 主库端口：每次与 master 断开之后，都需要重新连接，除非你配置进 `redis.conf` 文件。在运行期间修改 slave 节点的信息，如果该数据库已经是某个主数据库的从数据库，
+那么会停止和原主数据库的同步关系转而和新的主数据库同步，重新拜码头
+* slaveof no one：使当前数据库停止与其他数据库的同步，转成主数据库，自立为王
+
+
+=== 主从问题
+
+* 从机可以执行写命令吗？：不能
+* 从机是从头开始复制还是从切入点开始复制？：首次一锅端，后续跟随，master 写，slave 跟
+* 主机 shutdown 后，从机会上位吗？：从机不动，原地待命，从机数据可以正常使用；等待主机重启动归来
+* 主机 shutdown 后，重启后主从关系还在吗？从机还能否顺利复制？依旧在
+
+=== 复制原理和工作流程
+
+* slave启动，同步初请：slave 启动成功连接到 master 后会发送一个 sync 命令，slave 首次全新连接 master,一次完全同步（全量复制)将被自动执行，slave 自身原有数据会被 master 数据覆盖清除
+* 首次连接，全量复制：master 节点收到 sync 命令后会开始在后台保存快照(即 RDB 持久化，主从复制时会触发 RDB)， 同时收集所有接收到的用于修改数据集命令缓存起来，master 节点执行 RDB 持久化完后，
+master 将 rdb 快照文件和所有缓存的命令发送到所有 slave,以完成一次完全同步。而 slave 服务在接收到数据库文件数据后，将其存盘并加载到内存中，从而完成复制初始化
+* 心跳持续，保持通信：`repl-ping-replica-period` ，master 发出 PING 包的周期，默认是 10 秒
+* 进入平稳，增量复制：Master 继续将新的所有收集到的修改命令自动依次传给 slave,完成同步
+* 从机下线，重连续传：master 会检查 backlog 里面的 offset，master 和 slave 都会保存一个复制的 offset 还有一个 masterId， offset 是保存在 backlog 中的。Master 只会把已经复制的 offset 后面的数据复制给 Slave，类似断点续传
+
+=== 缺点
+
+* 由于所有的写操作都是先在 Master 上操作，然后同步更新到 Slave 上，所以从 Master 同步到 Slave 机器有一定的延迟，当系统很繁忙的时候，延迟问题会更加严重，Slave 机器数量的增加也会使这个问题更加严重。
+* 默认情况下，不会在 slave 节点中自动重选一个 master
+
+[[nosql-redis-sentinel]]
+== Redis 哨兵(sentinel)
+
+Redis 哨兵：吹哨人巡查监控后台master主机是否故障，如果故障了根据投票数自动将某一个从库转换为新主库，继续对外服务。俗称无人值守运维
+
+* 主从监控：监控主从 redis 库运行是否正常
+* 消息通知：哨兵可以将故障转移的结果发送给客户端
+* 故障转移：如果 Master 异常，则会进行主从切换， 将其中一个 Slave 作为新 Master
+* 配置中心：客户端通过连接哨兵来获得当前 Redis 服务的主节点地址
+
+=== 配置
+
+添加 `sentinel.conf` 文件。
+
+
+|===
+|属性 |描述
+
+| bind
+| 服务监听地址，用于客户端连接，默认本机地址
+
+| daemonize
+| 是否以后台 daemon 方式运行
+
+| protected-mode
+| 安全保护模式
+
+| port
+| 端口
+
+| logfile
+| 日志文件路径
+
+| pidfile
+| pid文件路径
+
+| dir
+| 工作目录
+
+| sentinel monitor <master-name> <ip> <redis-port> <quorum>
+| 设置要监控的 master 服务器，quorum 表示最少有几个哨兵认可客观下线，同意故障迁移的法定票数。
+
+| sentinel auth-pass <master-name> <password>
+| master 设置了密码，连接 master 服务的密码
+
+| sentinel down-after-milliseconds <master-name> <milliseconds>
+| 指定多少毫秒之后，主节点没有应答哨兵，此时哨兵主观上认为主节点下线
+
+| sentinel parallel-syncs <master-name> <nums>
+| 表示允许并行同步的 slave 个数，当 Master 挂了后，哨兵会选出新的 Master，此时，剩余的 slave 会向新的 master 发起同步数据
+
+| sentinel failover-timeout <master-name> <milliseconds>
+| 故障转移的超时时间，进行故障转移时，如果超过设置的毫秒，表示故障转移失败
+
+| sentinel notification-script <master-name> <script-path>
+| 配置当某一事件发生时所需要执行的脚本
+
+| sentinel client-reconfig-script <master-name> <script-path>
+| 客户端重新配置主节点参数脚本
+|===
+
+我们知道，网络是不可靠的，有时候一个 sentinel 会因为网络堵塞而误以为一个 master redis 已经死掉了，在 sentinel 集群环境下需要多个 sentinel 互相沟通来确认某个 master 是否真的死了，quorum 这个参数是进行客观下线的一个依据，
+意思是至少有 quorum 个 sentinel 认为这个 master 有故障，才会对这个 master 进行下线以及故障转移。因为有的时候，某个 sentinel 节点可能因为自身网络原因，导致无法连接 master，而此时 master 并没有出现故障，所以，
+这就需要多个 sentinel 都一致认为该 master 有问题，才可以进行下一步操作，这就保证了公平性和高可用。
+
+=== 哨兵运行流程
+
+当一个主从配置中的 master 失效之后，sentinel 可以选举出一个新的 master 用于自动接替原 master 的工作，主从配置中的其他 redis 服务器自动指向新的 master 同步数据。
+一般建议 sentinel 采取奇数台，防止某一台 sentinel 无法连接到 master 导致误切换
+
+==== SDown 主观下线(Subjectively Down)
+
+所谓主观下线（Subjectively Down， 简称 SDOWN）指的是单个 Sentinel 实例对服务器做出的下线判断，即单个 sentinel 认为某个服务下线（有可能是接收不到订阅，之间的网络不通等等原因）。
+主观下线就是说如果服务器在 [sentinel down-after-milliseconds] 给定的毫秒数之内没有回应 PING 命令或者返回一个错误消息， 那么这个 Sentinel 会主观的(单方面的)认为这个 master 不可以用了。
+
+`sentinel down-after-milliseconds <masterName> <timeout>` 表示 master 被当前 sentinel 实例认定为失效的间隔时间，这个配置其实就是进行主观下线的一个依据
+master 在多长时间内一直没有给 Sentine 返回有效信息，则认定该 master 主观下线。也就是说如果多久没联系上 redis-servevr，认为这个 redis-server 进入到失效（SDOWN）状态。
+
+====  ODown 客观下线(Objectively Down)
+
+ODOWN 需要一定数量的 sentinel，多个哨兵达成一致意见才能认为一个 master 客观上已经宕掉
+
+masterName 是对某个 master+slave 组合的一个区分标识(一套 sentinel 可以监听多组 master+slave 这样的组合)
+
+image::img/sentinel01.jpeg[]
+
+**quorum** 这个参数是进行客观下线的一个依据，法定人数/法定票数
+意思是至少有 `quorum` 个 sentinel 认为这个 master 有故障才会对这个 master 进行下线以及故障转移。因为有的时候，某个 sentinel 节点可能因为自身网络原因导致无法连接 master，而此时 master 并没有出现故障，
+所以这就需要多个 sentinel 都一致认为该 master 有问题，才可以进行下一步操作，这就保证了公平性和高可用。
+
+=== 选举原理
+
+. 当主节点被判断客观下线以后，各个哨兵节点会进行协商， 先选举出一个领导者哨兵节点（兵王）并由该领导者节点， 也即被选举出的兵王进行 failover（故障迁移），哨兵领导者是通过 Raft 算法选举出来的
++
+image::img/sentinel02.jpeg[]
++
+监视该主节点的所有哨兵都有可能被选为领导者，选举使用的算法是 Raft 算法；Raft 算法的基本思路是先到先得： 即在一轮选举中，哨兵 A 向 B 发送成为领导者的申请，如果 B 没有同意过其他哨兵，则会同意 A 成为领导者。
+. 由哨兵领导者选出新的 master 节点，选举规则如下：
++
+image::img/sentinel03.jpeg[]
++
+* `redis.conf` 文件中，优先级 `slave-priority` 或者 `replica-priority` 最高的从节点(数字越小优先级越高)
+* 复制偏移位置 offset 最大的从节点。偏移量是指获得原主数据最多的。
+* 最小 Run ID 的从节点，字典顺序，ASCII码。每个 Redis 实例启动后都会随机生成一个 40 位的 runid
+. 执行 slaveof no one 命令让选出来的从节点成为新的主节点，并通过 slaveof 命令让其他节点成为其从节点
+. 将之前已下线的老 master 设置为新选出的新 master 的从节点，当老 master 重新上线后，它会成为新 master 的从节点。Sentinel leader 会让原来的 master 降级为 slave 并恢复正常工作。
+
+=== 哨兵使用建议
+
+* 哨兵节点的数量应为多个，哨兵本身应该集群，保证高可用
+* 哨兵节点的数量应该是奇数
+* 各个哨兵节点的配置应一致
+* 如果哨兵节点部署在 Docker 等容器里面，尤其要注意端口的正确映射
+* 哨兵集群+主从复制，并不能保证数据零丢失（使用集群）
+
+[[nosql-redis-cluster]]
+== Redis 集群(cluster)
+
+由于数据量过大，单个 Master 复制集难以承担，因此需要对多个复制集进行集群，形成水平扩展每个复制集只负责存储整个数据集的一部分，这就是 Redis 的集群，其作用是提供在多个 Redis 节点间共享数据的程序集。
+
+image::img/cluster01.jpeg[]
+
+Redis 集群是一个提供在多个Redis节点间共享数据的程序集，Redis 集群可以支持多个 Master。Redis 集群有以下特性
+
+* Redis 集群支持多个 Master，每个 Master 又可以挂载多个 Slave。也就意味着读写分离，支持数据的高可用，支持海量数据的读写存储操作。
+* 由于 Cluster 自带 Sentinel 的故障转移机制，内置了高可用的支持，无需再去使用哨兵功能
+* 客户端与 Redis 的节点连接，不再需要连接集群中所有的节点，只需要任意连接集群中的一个可用节点即可
+* 槽位 slot 负责分配到各个物理服务节点，由对应的集群来负责维护节点、插槽和数据之间的关系
+
+=== 集群分片
+
+
+
+
+
+
+
+
 
 [[nosql-redis-conf]]
 == Redis 配置文件(redis.conf)
