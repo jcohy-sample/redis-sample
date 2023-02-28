@@ -1,0 +1,45 @@
+[[redis-replica]]
+== Redis 复制(replica)
+
+Redis 复制，就是主从复制，master 以写为主，Slave 以读为主，当 master 数据变化的时候，自动将新的数据异步同步到其它 slave 数据库，主要有以下特点：
+
+* 读写分离
+* 容灾恢复
+* 数据备份
+* 水平扩容支撑高并发
+
+NOTE:: master 如果配置了 `requirepass` 参数，需要密码登陆，那么 slave 就要配置 `masterauth` 来设置校验密码， 否则的话 master 会拒绝 slave 的访问请求
+
+=== 配置
+
+<<redis-conf-replication>>
+
+=== 主要命令
+
+* info replication：可以查看复制节点的主从关系和配置信息
+* replicaof 主库IP 主库端口：一般写入进 `redis.conf` 配置文件内
+* slaveof 主库IP 主库端口：每次与 master 断开之后，都需要重新连接，除非你配置进 `redis.conf` 文件。在运行期间修改 slave 节点的信息，如果该数据库已经是某个主数据库的从数据库，
+那么会停止和原主数据库的同步关系转而和新的主数据库同步，重新拜码头
+* slaveof no one：使当前数据库停止与其他数据库的同步，转成主数据库，自立为王
+
+
+=== 主从问题
+
+* 从机可以执行写命令吗？：不能
+* 从机是从头开始复制还是从切入点开始复制？：首次一锅端，后续跟随，master 写，slave 跟
+* 主机 shutdown 后，从机会上位吗？：从机不动，原地待命，从机数据可以正常使用；等待主机重启动归来
+* 主机 shutdown 后，重启后主从关系还在吗？从机还能否顺利复制？依旧在
+
+=== 复制原理和工作流程
+
+* slave启动，同步初请：slave 启动成功连接到 master 后会发送一个 sync 命令，slave 首次全新连接 master,一次完全同步（全量复制)将被自动执行，slave 自身原有数据会被 master 数据覆盖清除
+* 首次连接，全量复制：master 节点收到 sync 命令后会开始在后台保存快照(即 RDB 持久化，主从复制时会触发 RDB)， 同时收集所有接收到的用于修改数据集命令缓存起来，master 节点执行 RDB 持久化完后，
+master 将 rdb 快照文件和所有缓存的命令发送到所有 slave,以完成一次完全同步。而 slave 服务在接收到数据库文件数据后，将其存盘并加载到内存中，从而完成复制初始化
+* 心跳持续，保持通信：`repl-ping-replica-period` ，master 发出 PING 包的周期，默认是 10 秒
+* 进入平稳，增量复制：Master 继续将新的所有收集到的修改命令自动依次传给 slave,完成同步
+* 从机下线，重连续传：master 会检查 backlog 里面的 offset，master 和 slave 都会保存一个复制的 offset 还有一个 masterId， offset 是保存在 backlog 中的。Master 只会把已经复制的 offset 后面的数据复制给 Slave，类似断点续传
+
+=== 缺点
+
+* 由于所有的写操作都是先在 Master 上操作，然后同步更新到 Slave 上，所以从 Master 同步到 Slave 机器有一定的延迟，当系统很繁忙的时候，延迟问题会更加严重，Slave 机器数量的增加也会使这个问题更加严重。
+* 默认情况下，不会在 slave 节点中自动重选一个 master

@@ -1,17 +1,24 @@
+
+
 description = "sample template for asciidoctor project"
 
-configure(allprojects) { abjects ->
+configure(allprojects - project(":bom")) { abjects ->
+
+	apply plugin: "java-library"
 
     group = "com.jcohy.sample"
     version = "1.0.0"
 
     repositories {
-        mavenCentral()
         maven { url = 'https://maven.aliyun.com/repository/central'}
         maven { url = 'https://repo.spring.io/libs-milestone'}
-        maven { url = 'https://repo.spring.io/snapshot/'}
-        maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/'}
+		mavenCentral()
     }
+
+	dependencies {
+		implementation('org.junit.jupiter:junit-jupiter')
+		implementation('org.junit.jupiter:junit-jupiter-engine')
+	}
 
     configurations.configureEach {
         resolutionStrategy {
@@ -19,6 +26,15 @@ configure(allprojects) { abjects ->
             cacheDynamicVersionsFor 0, "minutes"
         }
     }
+}
+
+
+dependencies {
+	implementation('org.springframework.boot:spring-boot-starter-web')
+	implementation('org.springframework.boot:spring-boot-starter-data-redis')
+	implementation('io.lettuce:lettuce-core')
+	implementation('redis.clients:jedis')
+	implementation('org.junit.jupiter:junit-jupiter-engine')
 }
 
 configure(rootProject) { abjects ->

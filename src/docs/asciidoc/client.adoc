@@ -1,0 +1,133 @@
+[[redis-client]]
+== Redis 客户端
+
+* Jedis：Jedis Client 是 Redis 官网推荐的一个面向 java 客户端， 库文件实现了对各类 API 进行封装调用
+* Lettuce：Lettuce 是一个 Redis 的 Java 驱动包，Lettuce 翻译为生菜
+* RedisTemplate：Spring 提供
+
+. Jedis VS Lettuce
+|===
+|Header 1 | Jedis | Lettuce
+
+| 优点
+| 简单易理解，全面的 Redis 操作 API
+| 线程安全，基于 Netty 框架的事件驱动通信，可异步调用。适用于分布式缓存
+
+| 缺点
+| 同步阻塞 IO，不支持异步，线程不安全
+| 学习成本高，上手相对复杂
+|===
+
+Jedis 和 Lettuce 都是 Redis 的客户端，都可以连接 Redis 服务器，但是在 SpringBoot2.0 之后默认使用的是 Lettuce 这个客户端。因为当使用 Jedis 连接 Redis 服务器的时候，每个线程都要拿自己创建的 Jedis 实例去连接
+Redis 客户端，当有多个线程的时候，不仅开销大需要反复的创建和关闭一个 Jedis 连接，而且也是线程不安全的，一个线程通过 Jedis 实例更改 Redis 服务器的数据之后会影响另一个线程
+
+而 Lettuce 底层使用的是 Netty，当有多个线程都需要连接 Redis 服务器的时候，可以保证只创建一个 Lettuce 连接，使所有的线程共享这一个 Lettuce 连接，这样可以减少创建关闭一个 Lettuce 连接带来的开销。而且，
+这种方式也是线程安全的，不会出现一个线程通过 Lettuce 更改 Redis 服务器中的数据之后而影响另一个线程的情况。
+
+=== 集成 SpringBoot
+
+==== 单机
+
+引入依赖
+
+[source,pom]
+----
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+----
+
+编写配置文件
+
+[source,properties]
+----
+# ========================redis单机=====================
+spring.redis.database=0
+# 修改为自己真实IP
+spring.redis.host=192.168.111.185
+spring.redis.port=6379
+spring.redis.password=111111
+spring.redis.lettuce.pool.max-active=8
+spring.redis.lettuce.pool.max-wait=-1ms
+spring.redis.lettuce.pool.max-idle=8
+spring.redis.lettuce.pool.min-idle=0
+----
+
+编写配置类
+
+[source,java]
+----
+package com.atguigu.redis7.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+/**
+ * @auther zzyy
+ * @create 2022-11-17 17:34
+ */
+@Configuration
+public class RedisConfig
+{
+    /**
+     * redis序列化的工具配置类，下面这个请一定开启配置
+     * 127.0.0.1:6379> keys *
+     * 1) "ord:102"  序列化过
+     * 2) "\xac\xed\x00\x05t\x00\aord:102"   野生，没有序列化过
+     * this.redisTemplate.opsForValue(); //提供了操作string类型的所有方法
+     * this.redisTemplate.opsForList(); // 提供了操作list类型的所有方法
+     * this.redisTemplate.opsForSet(); //提供了操作set的所有方法
+     * this.redisTemplate.opsForHash(); //提供了操作hash表的所有方法
+     * this.redisTemplate.opsForZSet(); //提供了操作zset的所有方法
+     * @param lettuceConnectionFactory
+     * @return
+     */
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory lettuceConnectionFactory)
+    {
+        RedisTemplate<String,Object> redisTemplate = new RedisTemplate<>();
+
+        redisTemplate.setConnectionFactory(lettuceConnectionFactory);
+        //设置 key 序列化方式 string
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        //设置value的序列化方式json，使用GenericJackson2JsonRedisSerializer替换默认序列化
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        redisTemplate.afterPropertiesSet();
+
+        return redisTemplate;
+    }
+}
+----
+
+==== 集群
+
+改写配置文件
+
+[source,properties]
+----
+# ========================redis集群=====================
+spring.redis.password=111111
+# 获取失败 最大重定向次数
+spring.redis.cluster.max-redirects=3
+spring.redis.lettuce.pool.max-active=8
+spring.redis.lettuce.pool.max-wait=-1ms
+spring.redis.lettuce.pool.max-idle=8
+spring.redis.lettuce.pool.min-idle=0
+spring.redis.cluster.nodes=192.168.111.175:6381,192.168.111.175:6382,192.168.111.172:6383,192.168.111.172:6384,192.168.111.174:6385,192.168.111.174:6386
+# SpringBoot 2.X 版本， Redis 默认的连接池采用 Lettuce 当 Redis 集群节点发生变化后，Lettuce 默认是不会刷新节点拓扑。所有我们需要打开以下配置
+# 支持集群拓扑动态感应刷新,自适应拓扑刷新是否使用所有可用的更新，默认 false 关闭。
+spring.redis.lettuce.cluster.refresh.adaptive=true
+#定时刷新
+spring.redis.lettuce.cluster.refresh.period=2000
+----
+
+

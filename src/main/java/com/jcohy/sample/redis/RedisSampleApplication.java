@@ -1,4 +1,6 @@
-package com.jcohy.sample.template;
+package com.jcohy.sample.redis;
+
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * 描述: .
@@ -10,7 +12,8 @@ package com.jcohy.sample.template;
  * @version 2022.0.1 ${DATE}:${TIME}
  * @since 2022.0.1
  */
-public class Main {
+@SpringBootApplication
+public class RedisSampleApplication {
 
 	public static void main(String[] args) {
 		System.out.println("Hello world!");

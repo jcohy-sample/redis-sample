@@ -13,6 +13,6 @@ https://www.jcohy.com[*https://www.jcohy.com/projects*]
 
 [horizontal]
 
-<<overview#nosql-overview,Nosql 概述>> :: Nosql 概述.
+<<overview#overview,Nosql 概述>> :: Nosql 概述.
 
-<<redis#nosql-redis,Redis 指南>> :: Redis 指南.
+<<redis#redis,Redis 指南>> :: Redis 指南.
