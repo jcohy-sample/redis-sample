@@ -2,5 +2,10 @@ rootProject.name = 'redis-sample'
 
 include "bom"
 
-include "java-template"
+include "redis-lettuce"
 
+include "redis-jedis"
+
+include "redis-template-standalone"
+
+include "redis-template-cluster"

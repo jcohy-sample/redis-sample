@@ -1,0 +1,25 @@
+server:
+  port: 18004
+spring:
+  application:
+    name: redis-template-cluster
+  data:
+    redis:
+      port: 6379
+      host: 127.0.0.1
+#      password: 111111
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: 1ms
+          max-idle: 8
+          min-idle: 0
+        cluster:
+          refresh:
+            # 支持集群拓扑动态感应刷新,自适应拓扑刷新是否使用所有可用的更新，默认false关闭
+            adaptive: true
+            # 定时刷新
+            period: 200
+      # 集群节点
+      cluster:
+        nodes: 192.168.111.175:6381,192.168.111.175:6382,192.168.111.172:6383,192.168.111.172:6384,192.168.111.174:6385,192.168.111.174:6386

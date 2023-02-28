@@ -4,6 +4,7 @@ description = "sample template for asciidoctor project"
 
 configure(allprojects - project(":bom")) { abjects ->
 
+    apply plugin: "com.jcohy.module"
 	apply plugin: "java-library"
 
     group = "com.jcohy.sample"
@@ -34,7 +35,6 @@ dependencies {
 	implementation('org.springframework.boot:spring-boot-starter-data-redis')
 	implementation('io.lettuce:lettuce-core')
 	implementation('redis.clients:jedis')
-	implementation('org.junit.jupiter:junit-jupiter-engine')
 }
 
 configure(rootProject) { abjects ->

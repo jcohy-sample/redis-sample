@@ -1,8 +1,0 @@
-plugins {
-    id "com.jcohy.module"
-}
-
-description = "Java Template Sample"
-
-dependencies {
-}

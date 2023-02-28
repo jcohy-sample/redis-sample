@@ -1,0 +1,16 @@
+server:
+  port: 18003
+spring:
+  application:
+    name: redis-template-standalone
+  data:
+    redis:
+      port: 6379
+      host: 127.0.0.1
+#      password: 111111
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: 1ms
+          max-idle: 8
+          min-idle: 0
