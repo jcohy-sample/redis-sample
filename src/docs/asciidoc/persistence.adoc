@@ -24,24 +24,14 @@ redis 的配置文件中的 SNAPSHOTTING 快照配置.详情参照 <<redis-conf-
 
 ====  如何触发 RDB 快照
 
-===== 自动触发
-
 * redis 的配置文件中的 SNAPSHOTTING 快照配置.详情参照 <<redis-conf-snapshotting>>
-
-===== NOTE:: 不可以把备份文件 `dump.rdb` 和生产 redis 服务器放在同一台机器，必须分开各自存储， 以防生产机物理损坏后备份文件也挂了。
-
-手动触发：通过 `save` 和 `bgsave` 命令
-
 * save: 在主程序中执⾏会阻塞当前 redis 服务器，直到持久化工作完成 执行 save 命令期间，Redis 不能处理其他命令，**线上禁止使用**
 * bgsave: Redis 会在后台异步进行快照操作,快照同时还可以响应客户端请求.可以通过 `lastsave`.命令获取最后一次成功执行快照的时间.
-
-===== `flushall`/`flushdb`
-
 * 执行 `flushall`/`flushdb` 命令,也会产生 `dump.rdb` 文件,但里面是空的,无意义.
+* 执行 shutdown 且没有设置开启 AOF 持久化
+* 主从复制时，主节点自动触发
 
-===== 执行 shutdown 且没有设置开启 AOF 持久化
-
-===== 主从复制时，主节点自动触发
+NOTE:: 不可以把备份文件 `dump.rdb` 和生产 redis 服务器放在同一台机器，必须分开各自存储， 以防生产机物理损坏后备份文件也挂了。
 
 NOTE:: Redis 默认采用 BGSAVE 的方式
 
@@ -64,7 +54,7 @@ NOTE:: Redis 默认采用 BGSAVE 的方式
 
 ====  停止
 
-动态所有停止 RDB 保存规则的方法: redis-cli config set save ""
+动态所有停止 RDB 保存规则的方法: `redis-cli config set save`
 
 快照禁用: 通过配置文件
 

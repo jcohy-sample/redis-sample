@@ -1,0 +1,347 @@
+============================= Test Create Table ============================
+----------------------------- MySql Statement -----------------------------
+CREATE TABLE `test` (
+	`varchar_field` VARCHAR(50) DEFAULT '000000' PRIMARY KEY NOT NULL COMMENT 'varchar_field',
+	`nvarchar_field` VARCHAR(50) DEFAULT '000000' NOT NULL COMMENT 'nvarchar_field',
+	`char_field` CHAR(1) NULL COMMENT 'char_field',
+	`nchar_field` CHAR(1) NULL COMMENT 'char_field',
+	`text_field` TEXT NULL COMMENT 'text_field',
+	`ntext_field` TEXT NULL COMMENT 'ntext_field',
+	`xml_field` TEXT NULL COMMENT 'xml_field',
+	`longText_field` LONGTEXT NULL COMMENT 'longText_field',
+	`number_field1` TINYINT(3) NULL COMMENT 'TINYINT',
+	`number_field2` SMALLINT(5) NULL COMMENT 'SMALLINT',
+	`number_field3` MEDIUMINT(7) NULL COMMENT 'MEDIUMINT',
+	`number_field4` INT(10) NULL COMMENT 'INT',
+	`number_field5` BIGINT(19) NULL COMMENT 'BIGINT',
+	`decimal_field` DECIMAL(12, 2) NULL COMMENT 'decimal_field',
+	`numeric_field` NUMERIC(12, 2) NULL COMMENT 'numeric_field',
+	`money_field` DECIMAL(12, 2) NULL COMMENT 'money_field',
+	`float_filed` FLOAT(12, 0) DEFAULT 0 NULL COMMENT 'float_filed',
+	`double_filed` DOUBLE(12, 2) DEFAULT 0 NULL COMMENT 'double_filed',
+	`timestamp_field` TIMESTAMP NULL COMMENT 'timestamp_field',
+	`TIME_field` TIME NULL COMMENT 'TIME_field',
+	`data_field` DATE NULL COMMENT 'data_field',
+	`datetime_field` DATETIME NULL COMMENT 'datetime_field'
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT '用户表';
+
+----------------------------- Oracle Statement -----------------------------
+CREATE TABLE "test" (
+	"varchar_field" VARCHAR2(50) DEFAULT '000000' PRIMARY KEY NOT NULL,
+	"nvarchar_field" NVARCHAR2(50) DEFAULT '000000' NOT NULL,
+	"char_field" CHAR(1) NULL,
+	"nchar_field" NCHAR(1) NULL,
+	"text_field" VARCHAR2(4000) NULL,
+	"ntext_field" VARCHAR2(4000) NULL,
+	"xml_field" VARCHAR2(4000) NULL,
+	"longText_field" LONG NULL,
+	"number_field1" NUMBER(3) NULL,
+	"number_field2" NUMBER(5) NULL,
+	"number_field3" NUMBER(7) NULL,
+	"number_field4" NUMBER(10) NULL,
+	"number_field5" NUMBER(19) NULL,
+	"decimal_field" NUMBER(12, 2) NULL,
+	"numeric_field" NUMBER(12, 2) NULL,
+	"money_field" NUMBER(12, 2) NULL,
+	"float_filed" FLOAT(12) DEFAULT 0 NULL,
+	"double_filed" NUMBER(12, 2) DEFAULT 0 NULL,
+	"timestamp_field" DATE NULL,
+	"TIME_field" DATE NULL,
+	"data_field" DATE NULL,
+	"datetime_field" DATE NULL
+);
+
+COMMENT ON TABLE "test" IS '用户表';
+COMMENT ON COLUMN "test"."varchar_field" IS 'varchar_field';
+COMMENT ON COLUMN "test"."nvarchar_field" IS 'nvarchar_field';
+COMMENT ON COLUMN "test"."char_field" IS 'char_field';
+COMMENT ON COLUMN "test"."nchar_field" IS 'char_field';
+COMMENT ON COLUMN "test"."text_field" IS 'text_field';
+COMMENT ON COLUMN "test"."ntext_field" IS 'ntext_field';
+COMMENT ON COLUMN "test"."xml_field" IS 'xml_field';
+COMMENT ON COLUMN "test"."longText_field" IS 'longText_field';
+COMMENT ON COLUMN "test"."number_field1" IS 'TINYINT';
+COMMENT ON COLUMN "test"."number_field2" IS 'SMALLINT';
+COMMENT ON COLUMN "test"."number_field3" IS 'MEDIUMINT';
+COMMENT ON COLUMN "test"."number_field4" IS 'INT';
+COMMENT ON COLUMN "test"."number_field5" IS 'BIGINT';
+COMMENT ON COLUMN "test"."decimal_field" IS 'decimal_field';
+COMMENT ON COLUMN "test"."numeric_field" IS 'numeric_field';
+COMMENT ON COLUMN "test"."money_field" IS 'money_field';
+COMMENT ON COLUMN "test"."float_filed" IS 'float_filed';
+COMMENT ON COLUMN "test"."double_filed" IS 'double_filed';
+COMMENT ON COLUMN "test"."timestamp_field" IS 'timestamp_field';
+COMMENT ON COLUMN "test"."TIME_field" IS 'TIME_field';
+COMMENT ON COLUMN "test"."data_field" IS 'data_field';
+COMMENT ON COLUMN "test"."datetime_field" IS 'datetime_field';
+
+----------------------------- SQLServer Statement -----------------------------
+CREATE TABLE [test] (
+	[varchar_field] VARCHAR(50) PRIMARY KEY NOT NULL,
+	[nvarchar_field] NVARCHAR(50) NOT NULL,
+	[char_field] CHAR(1) NULL,
+	[nchar_field] NCHAR(1) NULL,
+	[text_field] TEXT NULL,
+	[ntext_field] NTEXT NULL,
+	[xml_field] XML NULL,
+	[longText_field] TEXT NULL,
+	[number_field1] TINYINT NULL,
+	[number_field2] SMALLINT NULL,
+	[number_field3] INT NULL,
+	[number_field4] INT NULL,
+	[number_field5] BIGINT NULL,
+	[decimal_field] DECIMAL(12, 2) NULL,
+	[numeric_field] NUMERIC(12, 2) NULL,
+	[money_field] MONEY NULL,
+	[float_filed] NUMERIC(12) NULL,
+	[double_filed] NUMERIC(12, 2) NULL,
+	[timestamp_field] TIMESTAMP NULL,
+	[TIME_field] TIME NULL,
+	[data_field] DATE NULL,
+	[datetime_field] DATETIME2 NULL
+);
+
+EXEC sp_addextendedproperty
+'MS_Description', N'用户表',
+'SCHEMA', N'dbo',
+'TABLE', N'test';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'varchar_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'varchar_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'nvarchar_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'nvarchar_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'char_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'char_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'char_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'nchar_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'text_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'text_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'ntext_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'ntext_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'xml_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'xml_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'longText_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'longText_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'TINYINT',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'number_field1';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'SMALLINT',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'number_field2';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'MEDIUMINT',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'number_field3';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'INT',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'number_field4';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'BIGINT',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'number_field5';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'decimal_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'decimal_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'numeric_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'numeric_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'money_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'money_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'float_filed',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'float_filed';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'double_filed',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'double_filed';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'timestamp_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'timestamp_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'TIME_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'TIME_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'data_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'data_field';
+
+EXEC sp_addextendedproperty
+'MS_Description', N'datetime_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'datetime_field';
+
+
+
+============================= Test Rename Table ============================
+----------------------------- MySql Statement -----------------------------
+RENAME TABLE `test` TO `new_test`;
+
+----------------------------- Oracle Statement -----------------------------
+ALTER TABLE "test" RENAME TO "new_test";
+
+----------------------------- SQLServer Statement -----------------------------
+EXEC sp_rename [test], [new_test];
+
+
+============================= Test Drop Table ============================
+----------------------------- MySql Statement -----------------------------
+DROP TABLE `new_test`;
+
+----------------------------- Oracle Statement -----------------------------
+DROP TABLE "new_test";
+
+----------------------------- SQLServer Statement -----------------------------
+DROP TABLE [new_test];
+
+
+============================= Test Alter Table ADD Column ============================
+----------------------------- MySql Statement -----------------------------
+ALTER TABLE `test` ADD COLUMN `test_field` VARCHAR(12) NULL COMMENT 'test_field';
+
+----------------------------- Oracle Statement -----------------------------
+ALTER TABLE "test" ADD "test_field" VARCHAR2(12) NULL;
+COMMENT ON COLUMN "test"."test_field" IS 'test_field';
+----------------------------- SQLServer Statement -----------------------------
+ALTER TABLE [test] ADD [test_field] VARCHAR(12) NULL;
+
+EXEC sp_addextendedproperty
+'MS_Description', N'test_field',
+'SCHEMA', N'dbo',
+'TABLE', N'test',
+'COLUMN', N'test_field';
+
+
+============================= Test Alter Table Rename Column ============================
+----------------------------- MySql Statement -----------------------------
+ALTER TABLE `test`  RENAME COLUMN `test_field` TO `new_test_field`;
+
+----------------------------- Oracle Statement -----------------------------
+ALTER TABLE "test"  RENAME COLUMN "test_field" TO "new_test_field";
+
+----------------------------- SQLServer Statement -----------------------------
+EXEC sp_rename 'test.[test_field]', 'new_test_field' , 'column';
+
+
+============================= Test Alter Table ADD Column ============================
+----------------------------- MySql Statement -----------------------------
+ALTER TABLE `test` MODIFY COLUMN `new_test_field` TINYINT(3) DEFAULT 0 COMMENT 'TINYINT';
+
+----------------------------- Oracle Statement -----------------------------
+ALTER TABLE "test" MODIFY "new_test_field" NUMBER(3) DEFAULT 0;
+COMMENT ON COLUMN "test"."new_test_field" IS 'TINYINT';
+
+
+----------------------------- SQLServer Statement -----------------------------
+ALTER TABLE [test] ALTER COLUMN [new_test_field] TINYINT;
+
+
+============================= Test Alter Table Drop Column ============================
+----------------------------- MySql Statement -----------------------------
+ALTER TABLE `test` DROP COLUMN `new_test_field`;
+
+----------------------------- Oracle Statement -----------------------------
+ALTER TABLE "test" DROP COLUMN "new_test_field";
+
+----------------------------- SQLServer Statement -----------------------------
+ALTER TABLE [test] DROP COLUMN [new_test_field];
+
+
+============================= Test Insert Data ============================
+----------------------------- MySql Statement -----------------------------
+INSERT INTO `test`
+VALUES ('varchar_field', 'nvarchar_field', 'char', 'nchar', 'text_field', 'ntext_field', 'xml_field', 'longText_field', 3, 5, 7, 10, 19, 12.2, 12.2, 12.2, 12, 12.2, '2023-01-10 01:00:00', '02:00:00', '2023-01-10', '2023-01-10 04:00:00');
+
+----------------------------- Oracle Statement -----------------------------
+INSERT INTO "test"
+VALUES ('varchar_field', 'nvarchar_field', 'char', 'nchar', 'text_field', 'ntext_field', 'xml_field', 'longText_field', 3, 5, 7, 10, 19, 12.2, 12.2, 12.2, 12, 12.2, to_date('2023-01-10 01:00:00', 'yyyy-mm-dd hh24:mi:ss'), to_date('02:00:00', 'hh24:mi:ss'), to_date('2023-01-10', 'yyyy-mm-dd'), to_date('2023-01-10 04:00:00', 'yyyy-mm-dd hh24:mi:ss'));
+
+----------------------------- SQLServer Statement -----------------------------
+INSERT INTO [test]
+VALUES ('varchar_field', 'nvarchar_field', 'char', 'nchar', 'text_field', 'ntext_field', 'xml_field', 'longText_field', 3, 5, 7, 10, 19, 12.2, 12.2, 12.2, 12, 12.2, '2023-01-10 01:00:00', '02:00:00', '2023-01-10', '2023-01-10 04:00:00');
+
+
+============================= Test Insert Data ============================
+----------------------------- MySql Statement -----------------------------
+INSERT INTO `test`(varchar_field, nvarchar_field, decimal_field, numeric_field, number_field2, number_field3, number_field4, number_field5)
+VALUES ('varchar_field', 'nvarchar_field', 1.1, 10.1, 20.2, 30.3, 40.4, 50.5);
+
+----------------------------- Oracle Statement -----------------------------
+INSERT INTO "test"("varchar_field", "nvarchar_field", "decimal_field", "numeric_field", "number_field2", "number_field3", "number_field4", "number_field5")
+VALUES ('varchar_field', 'nvarchar_field', 1.1, 10.1, 20.2, 30.3, 40.4, 50.5);
+
+----------------------------- SQLServer Statement -----------------------------
+INSERT INTO [test](varchar_field, nvarchar_field, decimal_field, numeric_field, number_field2, number_field3, number_field4, number_field5)
+VALUES ('varchar_field', 'nvarchar_field', 1.1, 10.1, 20.2, 30.3, 40.4, 50.5);
+
+
+BUILD SUCCESSFUL in 30s
+5 actionable tasks: 5 executed
+11:17:03: 执行完成 ':test --tests "com.example.demo.SQLParserUnitTest" -Dfile.encoding=UTF-8'。

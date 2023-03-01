@@ -130,4 +130,4 @@ spring.redis.lettuce.cluster.refresh.adaptive=true
 spring.redis.lettuce.cluster.refresh.period=2000
 ----
 
-
+详情请参考 https://github.com/jcohy-sample/redis-sample/tree/main/redis-template-standalone[单机版] 和 https://github.com/jcohy-sample/redis-sample/tree/main/redis-template-cluster[集群版]

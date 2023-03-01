@@ -59,9 +59,11 @@ include::sentinel.adoc[]
 
 include::cluster.adoc[]
 
+include::client.adoc[]
+
 include::conf.adoc[]
 
-include::client.adoc[]
+
 
 
 
