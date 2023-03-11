@@ -144,7 +144,7 @@ slave 检测到上次和 master 交互的时间超过 `repl-timeout`, 则认为 
 
 | rename-command CONFIG b840fc02d524045429941cc15f59e41cb7be6c52 | 把危险的命令给修改成其他名称. 比如 CONFIG 命令可以重命名为一个很难被猜到的命令, 这样用户不能使用, 而内部工具还能接着使用.
 
-| rename-command CONFIG "" | 设置成一个空的值, 可以禁止一个命令
+| rename-command CONFIG "" | 设置成一个空的值, 可以禁止一个命令。 例如，禁用 `keys *` : rename-command keys "",
 |===
 
 [[redis-conf-limits]]

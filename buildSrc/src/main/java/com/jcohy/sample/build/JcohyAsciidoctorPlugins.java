@@ -7,7 +7,6 @@ import io.github.jcohy.gradle.asciidoctor.AsciidoctorConventionsPlugin;
 import io.github.jcohy.gradle.conventions.ConventionsPlugin;
 import io.github.jcohy.gradle.deployed.DeployedPlugin;
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask;
-import org.asciidoctor.gradle.jvm.AsciidoctorJExtension;
 import org.asciidoctor.gradle.jvm.AsciidoctorJPlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -60,5 +59,6 @@ public class JcohyAsciidoctorPlugins implements Plugin<Project> {
         attributes.put("kotlin-code", project.getRootProject().getProjectDir() + "/src/main/kotlin/com/jcohy/sample");
         attributes.put("go-code", project.getRootProject().getProjectDir() + "/src/main/go/com/jcohy/sample");
         attributes.put("oss-images", "https://study.jcohy.com/images/redis");
+        attributes.put("docs-java", project.getRootProject().getProjectDir() + "/src/main/java/com/jcohy/sample/redis");
     }
 }

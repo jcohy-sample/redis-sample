@@ -3,7 +3,7 @@
 
 我们可以在 https://redis.io/commands/[官网英文] 或 http://www.redis.cn/commands.html[中文] 获取 redis 常见数据类型操作命令。数据类型一览：
 
-image::img/redis03.jpeg[]
+image::../img/redis03.jpeg[]
 
 * <<redis-data-type-string>>
 * <<redis-data-type-list>>
@@ -70,7 +70,7 @@ image::img/redis03.jpeg[]
 [[redis-data-type-bitmap]]
 === bitmap
 
-image::img/redis04.jpeg[]
+image::../img/redis04.jpeg[]
 
 * 由 0 和 1 状态表现的二进制位的 bit 数组
 
@@ -91,7 +91,7 @@ image::img/redis04.jpeg[]
 [[redis-command]]
 == Redis 常用命令
 
-image::img/redis05.jpeg[]
+image::../img/redis05.jpeg[]
 
 * redis-benchmark  redis 性能测试
 * redis 默认安装了 `16` 个库,角标是 [0-15],默认数据库为 0. `select` 命令切换数据库

@@ -31,6 +31,7 @@ configure(allprojects - project(":bom")) { abjects ->
 
 
 dependencies {
+	implementation 'com.unfbx:chatgpt-java:1.0.2'
 	implementation('org.springframework.boot:spring-boot-starter-web')
 	implementation('org.springframework.boot:spring-boot-starter-data-redis')
 	implementation('io.lettuce:lettuce-core')
