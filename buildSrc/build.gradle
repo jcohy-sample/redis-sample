@@ -4,20 +4,22 @@ plugins {
 
 repositories {
 	//加上阿里云镜像
-	maven { url = 'https://maven.aliyun.com/repository/central'}
-	mavenCentral()
 	gradlePluginPortal()
-	maven { url "https://repo.spring.io/release" }
+	mavenCentral()
+	maven {
+		url = 'https://maven.aliyun.com/repository/public'
+	}
 }
 
 dependencies {
 	implementation("org.asciidoctor:asciidoctor-gradle-jvm:3.3.2")
 	implementation("org.asciidoctor:asciidoctor-gradle-jvm-pdf:3.3.2")
-	implementation("io.github.jcohy:jcohy-asciidoctor:${jcohyJavaFormatVersion}")
-	implementation("io.github.jcohy:jcohy-java-convention:${jcohyJavaFormatVersion}")
-	implementation("io.github.jcohy:jcohy-ali-oss:${jcohyJavaFormatVersion}")
+	implementation("io.github.jcohy:jcohy-asciidoctor:${JcohyGradlePluginVersion}")
+	implementation("io.github.jcohy:jcohy-java-convention:${JcohyGradlePluginVersion}")
+	implementation("io.github.jcohy:jcohy-ali-oss:${JcohyGradlePluginVersion}")
 	implementation("org.springframework:spring-core:6.0.2")
 	implementation("org.springframework:spring-web:6.0.2")
+	implementation("org.apache.maven:maven-embedder:3.6.2")
 }
 
 gradlePlugin {
