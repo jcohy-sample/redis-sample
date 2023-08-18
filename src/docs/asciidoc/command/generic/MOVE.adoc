@@ -1,34 +1,27 @@
-= DEL
+= MOVE
 
 **语法**
 
-[source,shell]
+[source,text]
 ----
-DEL key [key ...]
+MOVE key db
 ----
 
 **可用版本**：1.0.0
 
-**时间复杂度**：O(N) where N is the number of keys that will be removed. When a key to remove holds a value other than a string, the individual complexity for this key is O(M) where M is the number of elements in the list, set, sorted set or hash. Removing a single key that holds a string value is O(1).
+**时间复杂度**：O(1)
 
-**ACL 类别**：**@keyspace, @write, @slow**
+**ACL 类别**：**@keyspace, @write, @fast**
 
-Removes the specified keys. A key is ignored if it does not exist.
+将当前数据库的 key 移动到给定的数据库 db 当中。
+
+如果当前数据库(源数据库)和给定数据库(目标数据库)有相同名字的给定 key ，或者 key 不存在于当前数据库，那么 MOVE 没有任何效果。
+
+因此，也可以利用这一特性，将 MOVE 当作锁(locking)原语(primitive)。
 
 == 返回值
 
-https://redis.io/docs/reference/protocol-spec/#resp-integers[Integer reply]: The number of keys that were removed.
+https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]:
 
-
-== 示例
-
-[source,shell]
-----
-redis> SET key1 "Hello"
-"OK"
-redis> SET key2 "World"
-"OK"
-redis> DEL key1 key2 key3
-(integer) 2
-redis>
-----
+* 1 - key 被移动
+* 0 - key 没有移动

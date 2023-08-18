@@ -2,27 +2,27 @@
 
 **语法**
 
-[source,shell]
+[source,text]
 ----
 DEL key [key ...]
 ----
 
 **可用版本**：1.0.0
 
-**时间复杂度**：O(N) where N is the number of keys that will be removed. When a key to remove holds a value other than a string, the individual complexity for this key is O(M) where M is the number of elements in the list, set, sorted set or hash. Removing a single key that holds a string value is O(1).
+**时间复杂度**：
 
 **ACL 类别**：**@keyspace, @write, @slow**
 
-Removes the specified keys. A key is ignored if it does not exist.
+.
 
 == 返回值
 
-https://redis.io/docs/reference/protocol-spec/#resp-integers[Integer reply]: The number of keys that were removed.
+https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]: The number of keys that were removed.
 
 
 == 示例
 
-[source,shell]
+[source,text]
 ----
 redis> SET key1 "Hello"
 "OK"

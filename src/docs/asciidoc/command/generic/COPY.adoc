@@ -2,7 +2,7 @@
 
 **语法**
 
-[source,shell]
+[source,text]
 ----
 COPY source destination [DB destination-db] [REPLACE]
 ----
@@ -29,7 +29,7 @@ https://redis.io/docs/reference/protocol-spec/#resp-integers[返回整数]:
 
 == 示例
 
-[source,shell]
+[source,text]
 ----
 SET dolly "sheep"
 COPY dolly clone
