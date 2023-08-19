@@ -53,8 +53,8 @@ EXPIRE key seconds [NX | XX | GT | LT]
 
 https://redis.io/docs/reference/protocol-spec/#resp-integers[返回整型]:
 
-* 1 如果设置了超时.
-* 0 如果未设置超时，则为 0。 例如 key 不存在，或由于提供的参数而跳过操作。
+* 1 - 如果设置了超时.
+* 0 - 如果未设置超时，则为 0。 例如 key 不存在，或由于提供的参数而跳过操作。
 
 == 示例
 

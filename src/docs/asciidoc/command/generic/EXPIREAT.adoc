@@ -24,7 +24,7 @@ EXPIREAT key unix-time-seconds [NX | XX | GT | LT]
 
 == 选项
 
-`EXPIRE` 命令支持以下选项:
+`EXPIREAT` 命令支持以下选项:
 
 * NX -- 只有 key 不存在过期时间时设置过期时间
 * XX -- 只有 key 存在过期时间时设置过期时间

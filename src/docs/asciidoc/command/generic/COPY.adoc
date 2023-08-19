@@ -23,8 +23,8 @@ COPY source destination [DB destination-db] [REPLACE]
 
 https://redis.io/docs/reference/protocol-spec/#resp-integers[返回整数]:
 
-* 1 如果 source 被复制.
-* 0 source 没有被复制.
+* 1 - 如果 source 被复制.
+* 0 - source 没有被复制.
 
 
 == 示例

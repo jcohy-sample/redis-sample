@@ -21,8 +21,8 @@ EXPIRETIME key
 
 https://redis.io/docs/reference/protocol-spec/#resp-integers[返回整数]: 以秒为单位的到期 Unix 时间戳，或负值以表示错误（请参阅下面的描述）。
 
-* 如果 key 存在但没有关联的过期时间，则返回 -1。
-* 如果 key 不存在，返回 -2。
+* -1 - 如果 key 存在但没有关联的过期时间，则返回 -1。
+* -2 - 如果 key 不存在，返回 -2。
 
 == 示例
 

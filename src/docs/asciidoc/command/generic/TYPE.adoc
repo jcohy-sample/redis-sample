@@ -1,4 +1,4 @@
-= DEL
+= TYPE
 
 **语法**
 
@@ -9,26 +9,32 @@ DEL key [key ...]
 
 **可用版本**：1.0.0
 
-**时间复杂度**：
+**时间复杂度**：O(1)
 
-**ACL 类别**：**@keyspace, @write, @slow**
+**ACL 类别**：**@keyspace, @read, @fast**
 
-.
+返回 key 所储存的值的类型。可以返回的不同类型有：string, list, set, zset, hash 和 stream.
 
 == 返回值
 
-https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]: The number of keys that were removed.
+https://redis.io/docs/reference/protocol-spec/#resp-simple-strings[简单字符串]: key 的类型，或者当 key 不存在时返回 none。
 
 
 == 示例
 
 [source,text]
 ----
-redis> SET key1 "Hello"
+redis> SET key1 "value"
 "OK"
-redis> SET key2 "World"
-"OK"
-redis> DEL key1 key2 key3
-(integer) 2
+redis> LPUSH key2 "value"
+(integer) 1
+redis> SADD key3 "value"
+(integer) 1
+redis> TYPE key1
+"string"
+redis> TYPE key2
+"list"
+redis> TYPE key3
+"set"
 redis>
 ----

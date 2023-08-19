@@ -1,23 +1,23 @@
-= DEL
+= TOUCH
 
 **语法**
 
 [source,text]
 ----
-DEL key [key ...]
+TOUCH key [key ...]
 ----
 
-**可用版本**：1.0.0
+**可用版本**：3.2.1
 
-**时间复杂度**：
+**时间复杂度**：O(N)，其中 N 是要 touch 的 key 数量。
 
-**ACL 类别**：**@keyspace, @write, @slow**
+**ACL 类别**：**@keyspace, @read, @fast**
 
-.
+更改 key 的最后访问时间。 如果某个 key 不存在，则该键将被忽略。
 
 == 返回值
 
-https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]: The number of keys that were removed.
+https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]: touch 的 key 数量
 
 
 == 示例
@@ -28,7 +28,7 @@ redis> SET key1 "Hello"
 "OK"
 redis> SET key2 "World"
 "OK"
-redis> DEL key1 key2 key3
+redis> TOUCH key1 key2
 (integer) 2
 redis>
 ----
