@@ -2,7 +2,7 @@
 
 **语法**
 
-[source,shell]
+[source,text]
 ----
 DEL key [key ...]
 ----
@@ -22,7 +22,7 @@ https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]: The number
 
 == 示例
 
-[source,shell]
+[source,text]
 ----
 redis> SET key1 "Hello"
 "OK"
