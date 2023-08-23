@@ -1,0 +1,27 @@
+=
+
+**语法**
+
+[source,text]
+----
+
+----
+
+**可用版本**：1.0.0
+
+**时间复杂度**：O(1)。
+
+**ACL 类别**：****
+
+
+== 返回值
+
+https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]:
+
+
+== 示例
+
+[source,text]
+----
+
+----
