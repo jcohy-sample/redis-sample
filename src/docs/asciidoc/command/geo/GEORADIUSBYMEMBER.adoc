@@ -17,7 +17,7 @@ GEORADIUSBYMEMBER key member radius <M | KM | FT | MI> [WITHCOORD]
 
 **ACL 类别**：**@write, @geo, @slow**
 
-此命令与 GEORADIUS 完全相同，唯一的区别是它不采用经度和纬度值作为要查询的区域的中心，而是采用排序集表示的地理空间索引中已存在的成员的名称。
+此命令与 GEORADIUS 完全相同，唯一的区别是它不采用经度和纬度值作为要查询的区域的中心，而是采用有序集表示的地理空间索引中已存在的成员的名称。
 
 以指定成员的位置作为查询的中心。
 

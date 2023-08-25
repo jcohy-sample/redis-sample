@@ -16,13 +16,13 @@ GEOSEARCH key <FROMMEMBER member | FROMLONLAT longitude latitude>
 
 **ACL 类别**：**@read, @geo, @slow**
 
-使用 GEOADD 返回填充有地理空间信息的排序集的成员，这些成员位于给定形状指定的区域的边界内。 该命令扩展了GEORADIUS命令，除了支持圆形区域内搜索外，还支持矩形区域内搜索。
+使用 GEOADD 返回填充有地理空间信息的有序集的成员，这些成员位于给定形状指定的区域的边界内。 该命令扩展了GEORADIUS命令，除了支持圆形区域内搜索外，还支持矩形区域内搜索。
 
 应使用此命令代替已弃用的 GEORADIUS 和 GEORADIUSBYMEMBER 命令。
 
 查询的中心点由以下强制选项之一提供：
 
-* FROMMEMBER：使用给定现有 <member> 在排序集中的位置。
+* FROMMEMBER：使用给定现有 <member> 在有序集中的位置。
 * FROMLONLAT：使用给定的 <longitude> 和 <latitude> 位置。
 
 查询的形状由以下强制选项之一提供：

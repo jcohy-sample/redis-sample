@@ -10,7 +10,7 @@ GEOADD key [NX | XX] [CH] longitude latitude member [longitude
 
 **可用版本**：3.2.0
 
-**时间复杂度**：添加的每个元素的 O(log(N))，其中 N 是排序集中的元素数量。
+**时间复杂度**：添加的每个元素的 O(log(N))，其中 N 是有序集中的元素数量。
 
 **ACL 类别**：**@write, @geo, @slow**
 
@@ -25,7 +25,7 @@ GEOADD 命令以标准的 x,y 格式接受参数， 所以用户必须先输入�
 
 当用户尝试输入一个超出范围的经度或者纬度时， GEOADD 命令将返回一个错误。
 
-NOTE: 没有 `GEODEL` 命令，因为您可以使用 `ZREM` 删除元素。 Geo 索引结构只是一个排序集。
+NOTE: 没有 `GEODEL` 命令，因为您可以使用 `ZREM` 删除元素。 Geo 索引结构只是一个有序集。
 
 == GEOADD 选项
 
@@ -41,7 +41,7 @@ NOTE: XX 和 NX 选项是互斥的。
 
 sorted set使用一种称为 https://en.wikipedia.org/wiki/Geohash[Geohash]  的技术进行填充。经度和纬度的位是交错的，以形成一个独特的 52 位整数. 我们知道，一个 sorted set 的 double score 可以代表一个 52 位的整数，而不会失去精度。
 
-这种格式允许半径查询检查的1 + 8个领域需要覆盖整个半径，并丢弃元素以外的半径。通过计算该区域的范围，通过计算所涵盖的范围，从不太重要的部分的排序集的得分，并计算得分范围为每个区域的sorted set中的查询。
+这种格式允许半径查询检查的1 + 8个领域需要覆盖整个半径，并丢弃元素以外的半径。通过计算该区域的范围，通过计算所涵盖的范围，从不太重要的部分的有序集的得分，并计算得分范围为每个区域的sorted set中的查询。
 
 == 它使用什么地球模型？
 
@@ -51,7 +51,7 @@ sorted set使用一种称为 https://en.wikipedia.org/wiki/Geohash[Geohash]  的
 
 https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]:
 
-* 当不带可选参数使用时，添加到排序集中的元素数量（不包括分数更新）。
+* 当不带可选参数使用时，添加到有序集中的元素数量（不包括分数更新）。
 * 如果指定了 CH 选项，则为已更改（添加或更新）的元素数。
 
 == 示例

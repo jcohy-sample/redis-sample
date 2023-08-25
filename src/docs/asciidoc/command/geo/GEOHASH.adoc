@@ -13,7 +13,7 @@ GEOHASH key [member [member ...]]
 
 **ACL 类别**：**@read, @geo, @slow**
 
-返回有效的 https://en.wikipedia.org/wiki/Geohash[Geohash] 字符串，表示一个或多个元素在表示地理空间索引的排序集值中的位置（其中使用 GEOADD 添加元素）。
+返回有效的 https://en.wikipedia.org/wiki/Geohash[Geohash] 字符串，表示一个或多个元素在表示地理空间索引的有序集值中的位置（其中使用 GEOADD 添加元素）。
 
 通常，Redis 使用 Geohash 技术的变体来表示元素的位置，其中位置使用 52 位整数进行编码。 与标准相比，编码也不同，因为编码和解码过程中使用的初始最小和最大坐标不同。 但是，此命令会返回维基百科文章中描述的字符串形式的标准 https://en.wikipedia.org/wiki/Geohash[Geohash]，并且与 http://geohash.org[geohash.org] 网站兼容。
 
