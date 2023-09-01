@@ -12,4 +12,4 @@ https://www.jcohy.com[*https://www.jcohy.com*]
 
 <<base#redis-basic,Redis 基础篇>> :: Redis 简介，Redis 7 新特性，数据类型，持久化，事务，管道，发布订阅，副本，哨兵，集群.
 
-<<advance#redis-advance,Redis 高级篇>> :: 线程，BigKey，双写一致性.
+<<advance#redis-advance,Redis 高级篇>> :: 线程，BigKey，双写一致性，布隆过滤器，分布式锁，内存淘汰策略，IO 多路复用.

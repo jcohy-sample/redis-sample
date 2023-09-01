@@ -1,0 +1,46 @@
+== Lua 脚本
+
+Lua 是一种轻量级的、可扩展的脚本语言，广泛用于嵌入式系统、游戏开发、脚本编程等领域。Lua 的脚本代码通常以 .lua 扩展名保存。
+
+Redis 调用 Lua 脚本通过 eval 命令保证代码执行的原子性，直接使用 return 返回脚本执行后的结果值
+
+[source,text]
+----
+eval luascript numkeys [key [key ...]] [arg [arg ...]]
+----
+
+例如：
+
+[source,text]
+----
+eval "return redis.call('mset','k1','v1','k2','v2')" 0
+----
+
+[source,text]
+----
+eval "return redis.call('mset',KEYS[1],ARGV[1],KEYS[2],ARGV[2])" 2 k1 k2 lua1 lua2
+----
+
+带有 if 条件
+
+.if 格式
+[source,text]
+----
+if(业务条件) then
+    业务代码
+elseif(业务条件) then
+    业务代码
+else
+    业务代码
+end
+----
+
+括号可以省略。必须要有 `end`
+
+
+
+.
+[source,text]
+----
+eval "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end" 1 lock 1111
+----

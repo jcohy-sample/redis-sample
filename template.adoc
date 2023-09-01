@@ -3,3 +3,10 @@
 ----
 
 ----
+
+
+https://redis.io/docs/reference/protocol-spec/#resp-integers[整数]:结果集中成员数量。
+https://redis.io/docs/reference/protocol-spec/#resp-simple-strings[简单字符串]:
+https://redis.io/docs/reference/protocol-spec/#resp-bulk-strings[批量字符串]:
+https://redis.io/docs/reference/protocol-spec/#resp-bulk-strings[Null]:
+https://redis.io/docs/reference/protocol-spec/#resp-arrays[数组]: 集合的所有元素.

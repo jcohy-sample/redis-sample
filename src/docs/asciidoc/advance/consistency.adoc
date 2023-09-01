@@ -1,0 +1,299 @@
+[[redis-consistency]]
+== 缓存双写一致性
+
+缓存双写是指在更新数据库数据的同时更新缓存数据的策略。当需要更新数据库中的数据时，先更新数据库，再更新 Redis 缓存。这样可以保证数据库和缓存中的数据一致。
+
+具体的流程如下：
+
+* 当读取数据时，首先尝试从Redis缓存中获取数据。
+* 如果 Redis 缓存中存在数据，则直接返回给用户。
+* 如果 Redis 缓存中不存在数据，则从数据库中读取数据，并将数据写入 Redis 缓存，然后返回给用户。
+* 当需要更新数据库中的数据时，首先更新数据库中的数据。
+* 更新数据库成功后，同时更新 Redis 缓存中的数据，确保数据一致性。
+
+通过采用缓存双写策略，可以提高读取性能，并且保证数据的一致性。但是需要注意的是，双写操作会增加系统的复杂性和延迟，因为需要保证数据库和 Redis 缓存的一致性，同时还需要处理缓存更新可能出现的错误情况。
+
+在实际应用中，可以通过事务（transaction）来保证数据库和缓存的一致性，或者采用钩子（hook）或回调（callback）机制，在更新数据库后异步更新缓存。这样可以降低双写操作对性能的影响，同时提高系统的可靠性。
+
+=== 双重加锁策略
+
+在 Redis 缓存双写一致性中，双重加锁策略是一种常用的技术手段，用于确保在多线程并发场景下，只有一个线程可以执行缓存更新操作。这可以防止多线程并发更新缓存时可能导致的数据不一致问题。
+
+具体的双重加锁策略如下：
+
+. 首先，在进行缓存更新操作之前，先尝试获取一个全局的锁（如互斥锁）。
+** 如果获取到锁，则表示当前线程是唯一可以进行缓存更新的线程，继续执行后续的缓存更新操作。
+** 如果未能获取到锁，表示有其他线程正在执行缓存更新操作，当前线程需要等待锁的释放。
+. 在获取到全局锁后，再次检查缓存中是否存在需要更新的数据。
+** 如果缓存中不存在需要更新的数据，可能是其他线程已经更新过了，当前线程可以放弃缓存更新操作。
+** 如果缓存中存在需要更新的数据，执行具体的缓存更新操作，然后释放全局锁。
+
+通过双重加锁策略，可以确保在多线程并发场景下，只有一个线程可以进行缓存更新操作，从而保证了缓存的一致性。
+
+需要注意的是，双重加锁策略需要使用可重入锁（Reentrant Lock）或互斥锁等线程安全的锁机制，以确保同一线程可以多次获得锁，避免死锁等问题的发生。
+此外，还需要考虑锁定粒度的大小，避免过大或过小的锁定粒度对性能产生负面影响。
+
+以下是一个简单的 Java 代码示例，展示了如何使用双重加锁策略进行 Redis 缓存双写一致性的实现：
+
+[source,java]
+----
+import redis.clients.jedis.Jedis;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class RedisCacheUpdater {
+    private static final String REDIS_HOST = "localhost";
+    private static final int REDIS_PORT = 6379;
+    private static final Lock globalLock = new ReentrantLock();
+    private static final Jedis redisClient = new Jedis(REDIS_HOST, REDIS_PORT);
+
+    public void updateCache(String key, String value) {
+        // 尝试获取全局锁
+        if (globalLock.tryLock()) {
+            try {
+                // 再次检查缓存中是否存在需要更新的数据
+                if (redisClient.exists(key)) {
+                    // 更新缓存数据
+                    redisClient.set(key, value);
+                }
+            } finally {
+                // 释放全局锁
+                globalLock.unlock();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        RedisCacheUpdater cacheUpdater = new RedisCacheUpdater();
+        String key = "example_key";
+        String value = "example_value";
+        // 更新缓存数据
+        cacheUpdater.updateCache(key, value);
+    }
+}
+----
+
+在上述示例中，首先定义了 REDIS_HOST 和 REDIS_PORT 常量，用于指定 Redis 服务器的主机和端口。通过 `ReentrantLock` 创建了一个全局的 `globalLock` 对象，该对象用于保护对缓存的更新操作。使用 Jedis 客户端对象 `redisClient` 连接到 Redis 服务器。
+
+在 `updateCache` 方法中，通过 `globalLock.tryLock()` 尝试获取全局锁，如果获取成功，则执行后续的缓存更新操作。使用 `redisClient.exists(key)` 再次检查缓存中是否存在需要更新的数据，如果存在，则使用 `redisClient.set(key, value)` 方法来更新缓存数据。最后，在 `finally` 块中释放全局锁。
+
+在 `main` 方法中，创建了 `RedisCacheUpdater` 对象 `cacheUpdater` 并调用 `updateCache` 方法来更新缓存数据。
+
+请注意，以上代码仅为一个简单的示例，实际应用中，还需要根据具体情况进行适当的错误处理、异常处理和优化。另外，在使用双重加锁策略时，需要注意锁的粒度和精细控制，以避免不必要的锁竞争或性能问题。另外，Jedis 是一个流行的 Java Redis 客户端库，你需要在项目依赖中添加相关的 Jedis 库。
+
+=== 更新策略
+
+==== 目的：最终一致性
+
+给缓存设置更新时间，定期清理缓存并回写，是保证最终一致性的解决方案
+
+我们可以对存入缓存的数据设置过期时间，所有的写操作以数据库为准，对缓存操作只是仅最大努力即可。也就是说如果数据库写成功，缓存更新失败，那么只要到达过期时间，则后续的读请求自然会从
+数据库中读取新值然后回填缓存，达到一致性。
+
+上述方法和后续落地案例是调研后的主流和成熟的做法，但是各个公司的业务差距都不一样，具体的还得根据实际情况而定。
+
+=== 先更新数据库，再更新缓存
+
+此种策略可能会导致以下两个问题。我们以商品库存为例，假设一开始数据库和 Redis 里的数据都是 100
+
+==== 异常1：
+
+. 更新数据库，将库存更新为 99
+. 更新成功后，然后更新 Redis
+. 此时假设出现异常， Redis 更新失败了，这就导致数据库里是 99 ，而 Redis 里是 100。
+
+导致数据库和 Redis 中的数据不一致，读到 Redis 脏数据
+
+==== 异常2
+
+假设此时有 A，B 两个线程发起调用
+
+正常逻辑：
+
+. A 更新数据库为 90
+. A 更新 Redis 为 90
+. B 更新数据库为 80
+. B 更新 Redis 为 80
+
+但是，在多线程环境下，A,B 两个线程有快有慢，可能出现以下情况
+
+. A 更新数据库为 90
+. B 更新数据库为 80
+. B 更新 Redis 为 80
+. A 更新 Redis 为 90
+
+最终结果，数据库为 80，Redis 为 90 。也会导致数据不一致。
+
+=== 先更新缓存，再更新数据库
+
+此种方法以 Redis 为准，不太建议
+
+==== 异常
+
+假设此时有 A，B 两个线程发起调用
+
+正常逻辑：
+
+. A 更新 Redis 为 90
+. A 更新数据库为 90
+. B 更新 Redis 为 80
+. B 更新数据库为 80
+
+但是，在多线程环境下，A,B 两个线程有快有慢，可能出现以下情况
+
+. A 更新 Redis 为 90
+. B 更新 Redis 为 80
+. B 更新数据库为 80
+. A 更新数据库为 90
+
+最终结果，数据库为 90，Redis 为 80  。也会导致数据不一致。
+
+=== 先删除缓存，再更新数据库
+
+==== 异常
+
+假设此时有 A，B 两个线程发起调用。
+
+. A 线程成功的删除了 Redis 中的数据，然后更新数据库
+. 假设此时数据库还在更新中，并没有结束，B 线程又来读取缓存
+.. 此时 Redis 中是没有数据的，而数据库中的数据还是旧值
+.. B 会将获得的旧值回写到 Redis 。也就是刚刚被 A 删除的旧数据又被回写到了 Redis
+. A 线程更新数据库完成
+
+于是，缓存中的数据还是老数据，这将导致缓存中的数据是脏的，并且还有可能一直这么脏下去了。
+
+
+Redis延迟双删（Delayed Double Deletion）是指在缓存中删除数据时，延迟实际的删除操作，以防止短时间内的重复删除请求影响性能。
+它通过设置一个延迟时间，在该时间内如果有相同的删除请求到达，则将其延迟处理，避免重复删除。
+
+可以使用 延时双删解决：也就是在第一次删除缓存后，延迟一段时间后再进行删除。
+
+以下是一个简单的 Java 代码示例，展示了如何使用 Redis 延迟双删的实现方法：
+
+[source,java]
+----
+import redis.clients.jedis.Jedis;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class RedisCacheDeleter {
+    private static final String REDIS_HOST = "localhost";
+    private static final int REDIS_PORT = 6379;
+    private static final Lock lock = new ReentrantLock();
+    private static final Jedis redisClient = new Jedis(REDIS_HOST, REDIS_PORT);
+
+    public void deleteFromCache(String key) {
+        // 尝试获取锁
+        if(lock.tryLock()) {
+            try {
+                // 判断是否已经存在延迟删除任务
+                if(redisClient.exists(key)) {
+                    // 已经存在延迟删除任务，不做任何操作
+                } else {
+                    // 设置延迟时间，单位为毫秒
+                    long delayTime = 10000; // 10秒
+                    // 向缓存中添加标记，表示需要进行延迟删除
+                    redisClient.setex(key, (int)(delayTime/1000), "to_be_deleted");
+                    // 设置定时器，在延迟时间后执行真正的删除操作
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            deleteKey(key);
+                        }
+                    }, delayTime);
+                }
+            } finally {
+                // 释放锁
+                lock.unlock();
+            }
+        }
+    }
+
+    public void deleteKey(String key) {
+        // 尝试获取锁
+        if(lock.tryLock()) {
+            try {
+                // 检查缓存中是否存在需要删除的标记
+                if(redisClient.get(key).equals("to_be_deleted")) {
+                    // 执行删除操作
+                    redisClient.del(key);
+                }
+            } finally {
+                // 释放锁
+                lock.unlock();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        RedisCacheDeleter deleter = new RedisCacheDeleter();
+        String key = "example_key";
+        // 删除缓存数据
+        deleter.deleteFromCache(key);
+    }
+}
+----
+
+在上述示例代码中，首先定义了 `REDIS_HOST` 和 `REDIS_PORT` 常量，用于指定 Redis 服务器的主机和端口。通过 `ReentrantLock` 创建了一个全局的 `lock` 对象，该对象用于保护对缓存的删除操作。使用 Jedis 客户端对象 `redisClient` 连接到 Redis 服务器。
+
+在 `deleteFromCache` 方法中，通过 `lock.tryLock()` 尝试获取锁，如果获取成功，则执行后续的删除操作。首先检查缓存中是否已存在延迟删除任务，如果存在，则不做任何操作；如果不存在，则设置一个延迟时间（例如 10 秒），向缓存中添加一个标记以表示需要进行延迟删除，并设置一个定时器，在延迟时间后执行真正的删除操作。
+
+在 `deleteKey` 方法中，通过 `lock.tryLock()` 尝试获取锁，如果获取成功，则执行删除操作。首先检查缓存中是否存在需要删除的标记，如果存在，则执行删除操作。
+
+在 `main` 方法中，创建了 `RedisCacheDeleter` 对象 `deleter` 并调用 `deleteFromCache` 方法来触发缓存数据的删除操作。
+
+请注意，以上代码仅为一个简单的示例，实际应用中，还需要根据具体情况进行适当的错误处理、异常处理和优化。另外，选择合适的延迟时间对于避免重复删除和保证数据的一致性非常重要。在示例中，使用了 Java 的 `Timer` 类来实现定时器功能，你也可以使用其他方式来实现定时任务。同时需要注意，Jedis 是一个流行的 Java Redis 客户端库，你需要在项目依赖中添加相关的 Jedis  库。
+
+延迟时间可以根据经验来判断，或者使用 WatchDog 看门狗
+
+=== 先更新数据库，再删除缓存
+
+==== 异常
+
+假设此时有 A，B 两个线程发起调用。
+
+. A 更新数据库中的值，然后删除 Redis
+. 假设此时 Redis 还在删除中，并没有结束，B 线程又来读取缓存
+.. 缓存立刻命中，此时 B 读取的是缓存的旧值
+. A 线程删除缓存完成
+
+如果缓存删除失败，导致请求再次访问 Redis 时命中，读取到的是缓存的旧值
+
+可以参考
+
+* https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside
+* https://github.com/alibaba/canal/wiki/QuickStart[Canal]
+
+一种通用的解决方案
+
+. 可以把要删除的缓存值或者要更新的数据值先暂存到消息队列中（Kafka 或 RabbitMQ）。
+. 当程序没有成功的删除缓存值或者更新数据库的值，可以重新从消息队列中读取这些值，然后再次进行删除或更新
+. 如果能够成功的进行删除或更新，我们就要把这些值从消息队列中删除，以免重复操作，此时，我们也能保证数据库和缓存的数据一致了，否则，就需要再次进行重试
+. 如果重试次数超过一定次数后还没有成功，我们就要抛出异常了，通知运维人员
+
+
+在大多数场景中，建议优先更新数据库，再删除缓存的策略。
+
+
+=== 使用 Canal 完成双写一致性
+
+https://github.com/alibaba/canal/wiki/QuickStart[Canal]
+
+canal [kə'næl]，译意为水道/管道/沟渠，主要用途是基于 MySQL 数据库增量日志解析，提供增量数据订阅和消费
+
+早期阿里巴巴因为杭州和美国双机房部署，存在跨机房同步的业务需求，实现方式主要是基于业务 trigger 获取增量变更。从 2010 年开始，业务逐步尝试数据库日志解析获取增量变更进行同步，由此衍生出了大量的数据库增量订阅和消费业务。
+
+基于日志增量订阅和消费的业务包括
+
+* 数据库镜像
+* 数据库实时备份
+* 索引构建和实时维护(拆分异构索引、倒排索引等)
+* 业务 cache 刷新
+* 带业务逻辑的增量数据处理
+
+
+关于 Canal 的下载以及安装请参看官方文档。
+

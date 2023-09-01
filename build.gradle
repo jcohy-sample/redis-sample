@@ -34,6 +34,8 @@ dependencies {
 	implementation('org.springframework.boot:spring-boot-starter-web')
 	implementation('org.springframework.boot:spring-boot-starter-data-redis')
 	implementation('io.lettuce:lettuce-core')
+    implementation('org.redisson:redisson:3.23.3')
+    implementation("com.google.guava:guava")
 	implementation('redis.clients:jedis')
 }
 
