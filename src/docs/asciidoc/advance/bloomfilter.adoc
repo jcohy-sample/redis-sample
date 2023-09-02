@@ -1,0 +1,382 @@
+[[redis-bloom-filter]]
+== 布隆过滤器
+
+布隆过滤器（Bloom Filter）是一种用于快速判断某个元素是否存在于集合中的数据结构。它使用一个位数组（bit array）和若干个哈希函数构建。
+
+在布隆过滤器中，位数组是一个定长的比特位序列，初始时所有位都被置为 0。哈希函数可以将任意元素映射到位数组上的某个位置，并将对应位置的比特位设置为 1。
+
+布隆过滤器的判断过程如下：
+
+* 将待判断的元素经过同样的哈希函数处理得到对应的位数组位置。
+* 若所有对应位置的比特位都是1，则判断该元素可能存在于集合中；若存在至少一个比特位为 0，则判断该元素一定不存在于集合中。
+
+布隆过滤器的优点是占用空间相对较小且查询速度非常快，而不需要存储完整的数据集合。然而，布隆过滤器存在一定的误判率。即使判断某个元素存在于集合中，实际上可能并不存在，但不会有误判将某个元素判断为不存在。
+
+由于其特性，布隆过滤器在很多场景中得到广泛应用，例如网络爬虫中的URL去重、大规模数据集合中的重复数据判定、缓存穿透的处理等。但需要根据实际情况评估误判率所带来的影响，选择合适的参数和哈希函数数量。
+
+=== 特点
+
+* 节省内存
+* 高校的插入和删除
+* 但具有一定的误判率
+* 判断结果：存在时，元素不一定存在，不存在时，元素一定不存在。
+
+布隆过滤器可以添加元素，但尽量不要删除元素，由于涉及到 hashcode 判断依据，删除元素会导致误判率增加。
+
+.hash 冲突示例
+[source,java]
+----
+public class Hash {
+
+    public static void main(String[] args) {
+        // 哈希冲突示例
+        System.out.println("Aa".hashCode());
+        System.out.println("BB".hashCode());
+
+        System.out.println("柳柴".hashCode());
+        System.out.println("柴柕".hashCode());
+
+        Set<Integer> sets = new HashSet<>();
+        int hashCode;
+        for (int i = 0; i < 200000; i++) {
+            hashCode = new Object().hashCode();
+            if(sets.contains(hashCode)) {
+                System.out.println("运行到第 " + i + "次，出现了哈希冲突，hashCode = " + hashCode);
+                continue;
+            }
+            sets.add(hashCode);
+        }
+    }
+}
+----
+
+使用时最好不要让实际元素数量大于初始化容量，一次性给够避免扩容
+
+当实际元素超过初始化容量时，应该对布隆过滤器进行重建，重新分配一个 size 更大的过滤器，再将所有的历史容量批量添加进去
+
+=== 使用场景
+
+* 解决缓存穿透问题，在 Redis 中可以使用  bitmap
+* 黑名单校验，实现垃圾邮件等
+* 安全连接网址，全球上十亿网址判断
+
+=== Java 简单实现
+
+[source,java]
+----
+import java.util.BitSet;
+
+public class BloomFilter {
+
+    private BitSet bitSet; // 位数组
+    private int size; // 集合大小
+    private int numHashFunctions; // 哈希函数数量
+
+    public BloomFilter(int size, int numHashFunctions) {
+        this.size = size;
+        this.numHashFunctions = numHashFunctions;
+        this.bitSet = new BitSet(size);
+    }
+
+    // 插入元素
+    public void insert(String element) {
+        for (int i = 0; i < numHashFunctions; i++) {
+            int hash = hashFunction(element, i);
+            bitSet.set(hash);
+        }
+    }
+
+    // 判断元素是否存在
+    public boolean contains(String element) {
+        for (int i = 0; i < numHashFunctions; i++) {
+            int hash = hashFunction(element, i);
+            if (!bitSet.get(hash)) {
+                return false; // 只要有一个哈希位为0，则元素一定不存在
+            }
+        }
+        return true; // 所有哈希位都为1，则认为元素可能存在
+    }
+
+    // 哈希函数
+    private int hashFunction(String element, int seed) {
+        int hash = 0;
+        for (int i = 0; i < element.length(); i++) {
+            hash = seed * hash + element.charAt(i);
+        }
+        return Math.abs(hash) % size;
+    }
+
+    public static void main(String[] args) {
+        BloomFilter filter = new BloomFilter(32, 3);
+
+        filter.insert("apple");
+        filter.insert("banana");
+        filter.insert("orange");
+
+        System.out.println(filter.contains("apple")); // 输出 true
+        System.out.println(filter.contains("pear")); // 输出 false
+
+        filter.insert("apple"); // 重复插入元素
+
+        System.out.println(filter.contains("apple")); // 输出 true
+
+        filter.insert("grape");
+
+        System.out.println(filter.contains("grape")); // 输出 true
+
+        System.out.println(filter.contains("cherry")); // 输出 false
+    }
+}
+----
+
+=== 其他过滤器
+
+==== 布谷鸟过滤器
+
+论文地址: https://www.cs.cmu.edu/~binfan/papers/conext14_cuckoofilter.pdf[https://www.cs.cmu.edu/~binfan/papers/conext14_cuckoofilter.pdf]
+
+布谷鸟过滤器（Cuckoo Filter）是一种近似集合成员查询的数据结构，类似于布隆过滤器，但相比之下具有更低的假阳性率和更高的删除效率。
+
+布谷鸟过滤器使用哈希函数将元素映射到位数组上的若干位置。与布隆过滤器不同的是，一个位数组位置可以同时存储多个元素的指纹（fingerprint），而不仅仅是 0 或 1。
+
+布谷鸟过滤器的查询过程如下：
+
+* 将待查询的元素经过哈希函数处理得到对应的位数组位置。
+* 检查位数组上的指纹，如果待查询元素的指纹存在于其中，则判断该元素可能存在于集合中；否则，判断该元素一定不存在于集合中。
+
+要插入一个元素，先检查位数组位置上是否有空闲的位。如果有，可以直接插入指纹；如果没有，则随机选择一个位，将其替换为要插入元素的指纹，并递归重新安置被替换出的指纹。
+
+要删除一个元素，只需将其指纹从位数组对应的位置上删除即可，不需要修改其他位置的指纹。
+
+布谷鸟过滤器相对于布隆过滤器的优势是具有良好的删除支持和更低的误判率。但布谷鸟过滤器也存在一些缺点，如相对较高的空间占用以及插入操作可能涉及数据重排。尽管如此，布谷鸟过滤器仍然是一种快速、高效的近似集合成员查询解决方案。
+
+以下是一个简单的布谷鸟过滤器的 Java 实现示例：
+
+[source,java]
+----
+
+import java.util.Arrays;
+
+public class CuckooFilter {
+
+    private int capacity; // 过滤器容量
+    private int[] table; // 位数组
+    private int fingerprintBits; // 指纹位数
+
+    public CuckooFilter(int capacity, int fingerprintBits) {
+        this.capacity = capacity;
+        this.table = new int[capacity];
+        this.fingerprintBits = fingerprintBits;
+    }
+
+    // 插入元素
+    public void insert(int element) {
+        int fingerprint = getFingerprint(element);
+
+        // 查找空闲的位置插入
+        for (int i = 0; i < capacity; i++) {
+            if (table[i] == 0) {
+                table[i] = fingerprint;
+                return;
+            }
+        }
+
+        // 如果没有空闲位置，使用随机位置替换
+        int pos = (int) (Math.random() * capacity);
+        int temp = table[pos];
+        table[pos] = fingerprint;
+
+        // 递归插入被替换出的指纹
+        insert(temp);
+    }
+
+    // 判断元素是否存在
+    public boolean contains(int element) {
+        int fingerprint = getFingerprint(element);
+
+        for (int i = 0; i < capacity; i++) {
+            if (table[i] == fingerprint) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // 删除元素
+    public void remove(int element) {
+        int fingerprint = getFingerprint(element);
+
+        // 查找并删除指纹
+        for (int i = 0; i < capacity; i++) {
+            if (table[i] == fingerprint) {
+                table[i] = 0;
+                return;
+            }
+        }
+    }
+
+    // 获取指纹
+    private int getFingerprint(int element) {
+        // 使用简单的位运算获取指纹
+        return element % (1 << fingerprintBits);
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(table);
+    }
+
+    public static void main(String[] args) {
+        CuckooFilter filter = new CuckooFilter(8, 4);
+
+        filter.insert(10);
+        filter.insert(20);
+        filter.insert(30);
+
+        System.out.println(filter.contains(20)); // 输出 true
+        System.out.println(filter.contains(40)); // 输出 false
+
+        filter.remove(20);
+
+        System.out.println(filter.contains(20)); // 输出 false
+
+        System.out.println(filter);
+    }
+}
+----
+
+这只是一个简单的示例，实际上布谷鸟过滤器的实现可能会更加复杂，包括哈希函数的选择、冲突处理策略等。以上代码仅供参考，实际应用中可能需要根据具体需求进行适当的调整和优化。
+
+==== 布隆鸟过滤器
+
+布隆鸟过滤器（Bloom Filter with Cuckoo Hashing）是布隆过滤器与布谷鸟过滤器的结合，可以提供更低的误判率和更高的查询效率。以下是一个简单的布隆鸟过滤器的 Java 实现示例：
+
+[source,java]
+----
+import java.util.BitSet;
+import java.util.Random;
+
+public class BloomFilterWithCuckooHashing {
+
+    private BitSet bitSet; // 位数组
+    private int[] fingerprints; // 指纹数组
+    private int size; // 集合大小
+    private int capacity; // 过滤器容量
+    private int fingerprintBits; // 指纹位数
+    private int numHashFunctions; // 哈希函数数量
+    private Random random; // 随机数生成器
+
+    public BloomFilterWithCuckooHashing(int size, int capacity, int fingerprintBits, int numHashFunctions) {
+        this.size = size;
+        this.capacity = capacity;
+        this.fingerprintBits = fingerprintBits;
+        this.numHashFunctions = numHashFunctions;
+        this.bitSet = new BitSet(size);
+        this.fingerprints = new int[size];
+        this.random = new Random();
+    }
+
+    // 插入元素
+    public void insert(String element) {
+        int fingerprint = getFingerprint(element);
+        int hash1 = hashFunction1(element);
+        int hash2 = hashFunction2(element);
+
+        if (bitSet.get(hash1) && fingerprints[hash1] == fingerprint) {
+            return; // 元素可能已存在，无需重复插入
+        }
+
+        if (bitSet.get(hash2) && fingerprints[hash2] == fingerprint) {
+            return; // 元素可能已存在，无需重复插入
+        }
+
+        if (bitSet.get(hash1) && bitSet.get(hash2)) {
+            // 发生冲突，开始进行布谷鸟操作
+            int index = random.nextBoolean() ? hash1 : hash2;
+            int evictFingerprint = fingerprints[index];
+
+            // 随机选择一个替换位置
+            int randomIndex = random.nextBoolean() ? hashFunction1(evictFingerprint) : hashFunction2(evictFingerprint);
+            int temp = fingerprints[randomIndex];
+            bitSet.set(randomIndex);
+            fingerprints[randomIndex] = evictFingerprint;
+
+            // 循环替换直到没有冲突
+            while (bitSet.get(randomIndex)) {
+                randomIndex = random.nextBoolean() ? hashFunction1(temp) : hashFunction2(temp);
+                temp = fingerprints[randomIndex];
+                bitSet.set(randomIndex);
+                fingerprints[randomIndex] = evictFingerprint;
+            }
+
+            // 将新元素插入
+            int insertIndex = random.nextBoolean() ? hash1 : hash2;
+            bitSet.set(insertIndex);
+            fingerprints[insertIndex] = fingerprint;
+        } else {
+            // 两个位置至少有一个为空，直接插入
+            bitSet.set(hash1);
+            fingerprints[hash1] = fingerprint;
+            bitSet.set(hash2);
+            fingerprints[hash2] = fingerprint;
+        }
+    }
+
+    // 判断元素是否存在
+    public boolean contains(String element) {
+        int fingerprint = getFingerprint(element);
+        int hash1 = hashFunction1(element);
+        int hash2 = hashFunction2(element);
+
+        return (bitSet.get(hash1) && fingerprints[hash1] == fingerprint)
+                || (bitSet.get(hash2) && fingerprints[hash2] == fingerprint);
+    }
+
+    // 获取指纹
+    private int getFingerprint(String element) {
+        // 使用简单的位运算获取指纹
+        int hash = element.hashCode();
+        return hash % (1 << fingerprintBits);
+    }
+
+    // 哈希函数1
+    private int hashFunction1(String element) {
+        int hash = element.hashCode();
+        return Math.abs(hash % size);
+    }
+
+    // 哈希函数2
+    private int hashFunction2(String element) {
+        int hash = element.hashCode();
+        return Math.abs(((hash >> 16) ^ hash) % size);
+    }
+
+    public static void main(String[] args) {
+        BloomFilterWithCuckooHashing filter = new BloomFilterWithCuckooHashing(16, 8, 4, 2);
+
+        filter.insert("apple");
+        filter.insert("banana");
+        filter.insert("orange");
+
+        System.out.println(filter.contains("apple")); // 输出 true
+        System.out.println(filter.contains("pear")); // 输出 false
+
+        filter.insert("apple"); // 重复插入元素
+
+        System.out.println(filter.contains("apple")); // 输出 true
+
+        filter.insert("grape"); // 发生冲突
+
+        System.out.println(filter.contains("grape")); // 输出 true
+
+        filter.insert("mango"); // 再次插入元素，发生布谷鸟操作
+
+        System.out.println(filter.contains("mango")); // 输出 true
+
+        System.out.println(filter.contains("cherry")); // 输出 false
+    }
+}
+----
+
+这只是一个简单的示例，实际上布隆鸟过滤器的实现可能会更加复杂，包括哈希函数的选择、冲突处理策略等。以上代码仅供参考，实际应用中可能需要根据具体需求进行适当的调整和优化。

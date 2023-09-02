@@ -101,7 +101,7 @@ Redis 有两个原语来删除 key。一种称为 DEL，是对象的阻塞删除
 
 修改 `redis.conf` 中的 `lazyfree` 选项。常用是将以下三个改为 `yes`
 
-[source,conf]
+[source,text]
 ----
 lazyfree-lazy-server-del yes
 replica-lazy-flush yes

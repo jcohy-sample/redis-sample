@@ -60,6 +60,114 @@ image::../img/redis03.jpeg[]
 ** 计算两个位置之间的距离。
 ** 根据用户给定的经纬度坐标来获取指定范围内的地理位置集合
 
+
+==== 使用
+
+移动互联网时代 LBS 应用越来越多，交友软件中的附近好友，外卖软件中的附近店铺，打车软件的附近车辆等。那这种附近各种形形色色的地址位置是如何实现的。
+
+传统的基于数据库的缺点
+
+* 查询性能问题，如果并发量高，数据量大的查询是会搞垮数据库的
+* 一半 mysql 查询是一个平面矩形访问，而附近位置则是以我为中心的 N 半径的圆形覆盖
+* 精准度问题，我们知道地球不是一个平面坐标系，而是一个球体，这种矩形计算在长距离计算时会有很大的误差
+
+下面模拟一个美团地图位置附近推送酒店
+
+.GeoService
+[source,java]
+----
+@Service
+public class GeoService {
+    private final RedisTemplate<String,String> template;
+
+    public GeoService(RedisTemplate<String,String> template) {
+        this.template = template;
+    }
+
+
+    public String geoAdd() {
+        Map<String,Point> map = new HashMap<>();
+        map.put("天安门",new Point(116.403963,39.915119));
+        map.put("故宫",new Point(116.403414,39.924091));
+        map.put("长城",new Point(116.024067,40.362619));
+        template.opsForGeo().add("city",map);
+        return map.toString();
+    }
+
+    public Point geoPos(String member) {
+        return template.opsForGeo().position("city",member).get(0);
+    }
+
+    public String geoHash(String member) {
+        return template.opsForGeo().hash("city",member).get(0);
+    }
+
+    public Distance geoDist(String member1,String member2) {
+        return template.opsForGeo().distance("city",member1,member2, RedisGeoCommands.DistanceUnit.KILOMETERS);
+    }
+
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> geoRadius() {
+        // 王府井
+        Circle circle = new Circle(116.418017,39.914402, Metrics.KILOMETERS.getMultiplier());
+        RedisGeoCommands.GeoRadiusCommandArgs args = RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs()
+                .includeDistance()
+                .includeCoordinates()
+                .sortDescending()
+                .limit(50);
+        return template.opsForGeo().radius("city",circle,args);
+    }
+
+    @GetMapping("/georadiusbymember")
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> geoRadiusByMember() {
+        return template.opsForGeo().radius("cite","天安门",Metrics.KILOMETERS.getMultiplier());
+    }
+}
+----
+
+.GeoController
+[source,java]
+----
+@RestController
+public class GeoController {
+
+    private final GeoService service;
+
+    public GeoController(GeoService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/geoadd")
+    public String geoAdd() {
+        return service.geoAdd();
+    }
+
+    @GetMapping("/geopos")
+    public Point geoPos(String member) {
+        return service.geoPos(member);
+    }
+
+    @GetMapping("/geohash")
+    public String geoHash(String member) {
+        return service.geoHash(member);
+    }
+
+    @GetMapping("/geodist")
+    public Distance geoDist(String member1,String member2) {
+        return service.geoDist(member1, member2);
+    }
+
+    @GetMapping("/georadius")
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> geoRadius() {
+        return service.geoRadius();
+    }
+
+    @GetMapping("/georadiusbymember")
+    public GeoResults<RedisGeoCommands.GeoLocation<String>> geoRadiusByMember() {
+        return service.geoRadiusByMember();
+    }
+}
+----
+
 [[redis-data-type-hyperloglog]]
 === HyperLogLog
 
@@ -67,12 +175,107 @@ image::../img/redis03.jpeg[]
 * 在 Redis 里面，每个 HyperLogLog 键只需要花费 12 KB 内存，就可以计算接近 2^64 个不同元素的基 数。这和计算基数时，元素越多耗费内存就越多的集合形成鲜明对比。
 * 但是，因为 HyperLogLog 只会根据输入元素来计算基数，而不会储存输入元素本身，所以 HyperLogLog 不能像集合那样，返回输入的各个元素。
 
+==== 什么是 UV，PV，DAU，MAU
+
+* UV：Unique Visitors（独立访客数）是指在一定时间范围内访问网站、应用或页面的唯一用户数量。每个访客只计算一次，无论他们访问了多少次。
+* PV：Page Views（页面浏览量）是指在一定时间内网站、应用或页面被访问的总次数。每次访问都计算为一个页面浏览量，无论该用户是否已经在此之前浏览过该页面。
+* DAU：Daily Active Users（日活跃用户数）是指在特定的日期内活跃使用某个应用、网站或服务的用户数量。通常以每天为单位计算，并计算该日内至少有一次活跃行为的用户总数。
+* MAU：Monthly Active Users（月活跃用户数）是指在特定的月份内活跃使用某个应用、网站或服务的用户数量。通常以每月为单位计算，并计算该月内至少有一次活跃行为的用户总数。
+
+这些指标常用于衡量网站、应用或服务的流量和用户活跃度。通过跟踪独立访客数、页面浏览量以及每日或每月活跃用户数，可以评估和监控用户的参与度、增长趋势和受欢迎程度，帮助做出相应的营销策略和产品改进决策。
+
+==== 去重统计方法
+
+* HashSet
+* bitmap:bitmap 是通过用位 bit 数组来表示各个元素是否出现，每个元素需要一位，需要的总内存位 N 个 bit。基数统计则将每一个元素对应到 bit 数组中的其中一位，比如 bit 数组 010010101 （按照从 0 开始下标，有的就是 1，4，6，8）。
+新加入的元素只需要将已经有的 bit 数组和新加入的元素按位或计算就行，这种方式能大大减少内存且位操作迅速
++
+假设一个样本案例要统计一亿个数据的基数位值，大约需要内存 100000000/8/1024/1024，约等于 12M，但是，当需要 10000 个对象样本时（1W 个亿级）就需要 117.1875G，将近 120G。可见
+bitmap 不适用于大数据量下（亿级）的基数计数场景。但是 bitmap 的方法是精确计算的。
+* hyperloglog：可以通过牺牲准确率来换取空间，对于不要求绝对准确率的场景下可以使用，因为概率算法不直接存储数据本身，通过一定的概率统计算法预估基数值，同时保证误差在一定范围内，
+由于又不存储数据，所以可以大大减少内存。
++
+HyperLogLog 就是一种概率算法的实现，只是进行不重复的基数统计，不是集合也不保存数据，只是记录数量而不是具体内容。提供不精确的去重计数方案，但误差也仅仅只有 0.81% 左右。详情可
+查看 https://antirez.com/news/75[Redis new data structure: the HyperLogLog]
+
+==== 首页亿级 UV 的 Redis 统计方案
+
+.HyperLogLogService
+[source,java]
+----
+@Service
+public class HyperLogLogService {
+
+    private final RedisTemplate<String,String> template;
+
+    public HyperLogLogService(RedisTemplate<String, String> template) {
+        this.template = template;
+    }
+
+    @PostConstruct
+    public void initIp() {
+        new Thread(() -> {
+            for (int i = 0; i < 200; i++) {
+                Random random = new Random();
+                String ip = random.nextInt(256) + "." +
+                        random.nextInt(256) + "." +
+                        random.nextInt(256) + "." +
+                        random.nextInt(256);
+
+                Long hll = template.opsForHyperLogLog().add("hll", ip);
+                System.out.println("ip = " + ip + "," + "该 ip 访问首页的次数= " + hll);
+
+                try {
+                    Thread.sleep(3);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        },"t1").start();
+    }
+
+    public long uv() {
+        return template.opsForHyperLogLog().size("hll");
+    }
+}
+----
+
+.HyperLogLogController
+[source,java]
+----
+@Controller
+public class HyperLogLogController {
+
+    private final HyperLogLogService service;
+
+    public HyperLogLogController(HyperLogLogService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/ip")
+    public long uv() {
+        return service.uv() ;
+    }
+}
+----
+
 [[redis-data-type-bitmap]]
 === bitmap
 
 image::../img/redis04.jpeg[]
 
 * 由 0 和 1 状态表现的二进制位的 bit 数组
+
+=== 案例
+
+* 日活统计
+* 签到统计
+* 最近一周活跃用户
+* 统计指定用户一年之中的登录次数
+* 某用户一年 365 天，那几天登录过，那几天没有登录。全年共计登录天数。
+
+<<redis-bloom-filter>>
+
 
 [[redis-data-type-bitfield]]
 === bitfield
@@ -88,7 +291,7 @@ image::../img/redis04.jpeg[]
 * 简单来说发布订阅 (pub/sub) 可以分发消息，但无法记录历史消息。
 * 而 Redis Stream 提供了消息的持久化和主备复制功能，可以让任何客户端访问任何时刻的数据，并且能记住每一个客户端的访问位置，还能保证消息不丢失
 
-[[redis-command]]
+[[redis-usual-command]]
 == Redis 常用命令
 
 image::../img/redis05.jpeg[]
