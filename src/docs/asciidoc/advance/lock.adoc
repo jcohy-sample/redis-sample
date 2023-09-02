@@ -354,7 +354,7 @@ Java 中 ReentrantLock 和 synchronized 都是可重入锁。在一定程度上�
 
 不能使用 SETNX 命令了， SETNX 只能解决有无锁，不能解决可重入性，使用 HSET 结构。
 
-[source,text ]
+[source,text]
 ----
 127.0.0.1:6379> EXISTS redisLock
 (integer) 0
@@ -878,7 +878,7 @@ public class InventoryServiceWithRenew {
 
 RedLock 用来实现基于多个实例的分布式锁，锁变量由多个实例维护，即使有实例发生了故障，锁变量依然是存在的，客户端还是能完成操作。
 
-详情请参考 <<redis-redlock>>
+详情请参考 <<lock.adoc#redis-redlock>>
 
 该方案为了解决数据不一致问题，直接舍弃了异步复制，只是用 master 节点，同时由于舍弃了 slave，为了保证可用性，引入了 N 个节点。客户端只有在满足了下面两个条件时，才算加锁成功
 

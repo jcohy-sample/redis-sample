@@ -291,7 +291,7 @@ image::../img/redis04.jpeg[]
 * 简单来说发布订阅 (pub/sub) 可以分发消息，但无法记录历史消息。
 * 而 Redis Stream 提供了消息的持久化和主备复制功能，可以让任何客户端访问任何时刻的数据，并且能记住每一个客户端的访问位置，还能保证消息不丢失
 
-[[redis-command]]
+[[redis-usual-command]]
 == Redis 常用命令
 
 image::../img/redis05.jpeg[]

@@ -109,7 +109,6 @@ struct redisObject {
 我们来看看他的实现
 
 [source,text]
-====
 ----
 /* Note: sdshdr5 is never used, we just access the flags byte directly.
  * However is here to document the layout of type 5 SDS strings. */
@@ -142,6 +141,7 @@ struct __attribute__ ((__packed__)) sdshdr64 {
     char buf[];
 };
 ----
+====
 * len：字符串长度，可以在获取字符串长度的情况下 O(1) 拿到。
 * alloc：分配的空间长度。可以用来计算 free,就是字符串已经分配的未使用空间，有了这个值就可以引入预分配空间算法了，而不用去考虑内存分配的问题。
 * flags：sds 类型

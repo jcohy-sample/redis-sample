@@ -11,6 +11,8 @@ https://www.jcohy.com[*https://www.jcohy.com*]
 本教程整理自尚硅谷 Redis 7 实战零基础小白到高阶
 ****
 
-include::basic/index.adoc[leveloffset=+1]
+<<base#redis-basic,Redis 基础篇>> :: Redis 简介，Redis 7 新特性，数据类型，持久化，事务，管道，发布订阅，副本，哨兵，集群.
 
-include::advance/index.adoc[leveloffset=+1]
+<<advance#redis-advance,Redis 高级篇>> :: 线程，BigKey，双写一致性，布隆过滤器，分布式锁，内存淘汰策略，IO 多路复用.
+
+<<command#redis-command,Redis 命令>> :: Redis 各种类型的命令.

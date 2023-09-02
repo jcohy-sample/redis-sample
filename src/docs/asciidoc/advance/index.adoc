@@ -17,6 +17,6 @@ include::lua.adoc[]
 
 include::cache-eliminate.adoc[]
 
-include::source.adoc[]
+include::sources.adoc[]
 
 include::io.adoc[]
