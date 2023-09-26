@@ -186,7 +186,7 @@ redisObject 对象分配在同一块连续的内存空间，字符串 sds 嵌入
 
 NOTE: 对于 `embstr`，由于其实现是只读的，因此对 `embstr` 对象进行修改时，都会先转化成 `raw` 再进行修改。因此，只要是修改 `embstr` 对象，修改后的对象一定是 `raw` ，无论是否达到了 44 字节。
 
-== Hash 数据结构
+=== Hash 数据结构
 
 
 在 Redis 6 之前，Hash 使用  ZipList（压缩列表） 和 hashtable，在 Redis 7 之后，使用 listpack（紧凑列表） 和 hashtable。
@@ -230,11 +230,11 @@ Hash 类型的键的字段个数小于 `hash-max-listpack-entries` 并且每个�
 * 所有的键值对的键和值的字符串长度都小于等于 64byte（一个英文字母一个字节）时用 ZipList，反之 hashtable
 * ZipList 可以升级到 hashtable，反之不行，一旦从压缩列表转为了哈希表，Hash 类型就会一直使用哈希表而不会再转为压缩列表了。
 
-=== HashTable
+==== HashTable
 
 在 Redis 中，hashtable 被成为字典，他是一个数组 + 链表的结构
 
-=== ZipList
+==== ZipList
 
 ZipList 压缩列表是一种紧凑编码格式，总体思想是时间换空间，即以部分读写性能为代价，来换取极高的内存空间利用率，因此只会用于字段个数少，且字段值也小的场景。压缩列表内存利用率极高的原因与其连续内存的特性是分不开的。
 
@@ -500,9 +500,9 @@ image:../img/ziplist-003.png[]
 
 需要注意的是，Redis 中根据列表的长度和元素的大小等因素，会自动选择使用 ZipList 还是双向链表来作为列表数据类型的底层实现。当列表较小且满足一些特定条件时，使用 ZipList 可以提供更高的性能和节省的内存空间。
 
-=== ListPack
+==== ListPack
 
-==== 压缩列表连锁更新问题
+===== 压缩列表连锁更新问题
 
 image:../img/ziplist-004.png[]
 
@@ -532,7 +532,7 @@ ListPack 是Redis 中另一种特定的数据结构，用于存储列表类型�
 
 总的来说，ListPack 是 Redis 中用于存储和操作列表数据的新型数据结构。通过分段存储和灵活的编码方式，ListPack 在提供高效列表操作的同时，也能够节省内存空间。它适用于存储大型列表且需要频繁操作的场景，并且在 Redis 6.0 及以上版本中可用。
 
-== List 数据结构
+=== List 数据结构
 
 在 Redis 6 之前，List 使用 QuickList + ZipList 实现，在 Redis 6 之后，List 使用 QuickList + ListPack 实现。
 
