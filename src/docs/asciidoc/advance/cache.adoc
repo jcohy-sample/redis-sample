@@ -60,4 +60,4 @@
 
 总结
 
-image::../img/cache.jpg[]
+image::{image-dir}/cache.jpg[]

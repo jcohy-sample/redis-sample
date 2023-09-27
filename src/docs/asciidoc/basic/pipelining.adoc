@@ -8,7 +8,7 @@ Redis 是一种基于客户端-服务端模型以及请求/响应协议的 TCP �
 
 上述两步称为：Round Trip Time(简称 RTT,数据包往返于两端的时间)，如下：
 
-image::../img/pipelining01.jpeg[]
+image::{image-dir}/pipelining01.jpeg[]
 
 如果同时需要执行大量的命令，那么就要等待上一条命令应答后再执行，这中间不仅仅多了RTT（Round Time Trip），而且还频繁调用系统 IO，发送网络请求，同时需要 redis 调用多次 `read()` 和 `write()` 系统方法，
 系统方法会将数据从用户态转移到内核态，这样就会对进程上下文有比较大的影响了，性能不太好。
@@ -16,7 +16,7 @@ image::../img/pipelining01.jpeg[]
 管道(pipeline)可以一次性发送多条命令给服务端，服务端依次处理完完毕后，通过一条响应一次性将结果返回，
 通过减少客户端与 redis 的通信次数来实现降低往返延时时间。pipeline 实现的原理是队列，先进先出特性就保证数据的顺序性。
 
-image::../img/pipelining02.jpeg[]
+image::{image-dir}/pipelining02.jpeg[]
 
 定义：Pipeline 是为了解决 RTT 往返回时，仅仅是将命令打包一次性发送， 对整个 Redis 的执行不造成其它任何影响。
 

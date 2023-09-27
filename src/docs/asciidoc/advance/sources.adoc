@@ -22,7 +22,7 @@
 | OBJ_ENCODING_HT(2) 字典,OBJ_ENCODING_ZIPLIST(5) 压缩列表
 |===
 
-image::../img/RedisObject-0001.png[]
+image::{image-dir}/RedisObject-0001.png[]
 
 在 Redis 7 之后，OBJ_ENCODING_ZIPLIST（压缩列表）和 OBJ_ENCODING_LINKEDLIST（双端链表）不再使用，所有对应关系也有变化，
 使用新的数据结构 ListPack 来替代 ZipList，在 7.0 版本已经没有 ZipList 的配置了，6.0 版本仅部分数据类型作为过度阶段使用，ListPack 已经替代了 ZipList 类似的
@@ -48,7 +48,7 @@ hash-max-ziplist-entries 配置。
 | OBJ_ENCODING_HT(2) 字典,OBJ_ENCODING_LISTPACK(11) 紧凑列表
 |===
 
-image::../img/RedisObject-0002.png[]
+image::{image-dir}/RedisObject-0002.png[]
 
 Redis 中每一个对象都是一个 `redisObject` 结构，每个键值对都会有一个 `dictEntry`，源码在 `dict.h` 和 `dict.c` 文件中定义,这是一个结构体
 
@@ -426,7 +426,7 @@ ZipList 是一个经过特殊编码的双向链表，它不存储指向前一个
  */
 ----
 
-image:../img/ziplist-001.png[]
+image::{image-dir}/ziplist-001.png[]
 
 |===
 | 属性 | 类型 | 长度 | 用途
@@ -481,9 +481,9 @@ typedef struct zlentry {
 127.0.0.1:6379>
 ----
 
-image:../img/ziplist-002.png[]
+image::{image-dir}/ziplist-002.png[]
 
-image:../img/ziplist-003.png[]
+image::{image-dir}/ziplist-003.png[]
 
 以下是 ZipList 的主要特点：
 
@@ -504,11 +504,11 @@ image:../img/ziplist-003.png[]
 
 ===== 压缩列表连锁更新问题
 
-image:../img/ziplist-004.png[]
+image::{image-dir}/ziplist-004.png[]
 
-image:../img/ziplist-005.png[]
+image::{image-dir}/ziplist-005.png[]
 
-image:../img/ziplist-006.png[]
+image::{image-dir}/ziplist-006.png[]
 
 ListPack 是 Redis 设计用来取代掉 ZipList 的数据结构，它通过每个节点记录自己的长度且放在节点的尾部，来彻底解决了 ZipList 的连锁更新问题。
 
@@ -516,9 +516,9 @@ ListPack 是 Redis 设计用来取代掉 ZipList 的数据结构，它通过每�
 
 ListPack 构成
 
-image:../img/listpack-001.png[]
+image::{image-dir}/listpack-001.png[]
 
-image:../img/listpack-002.png[]
+image::{image-dir}/listpack-002.png[]
 
 ListPack 是Redis 中另一种特定的数据结构，用于存储列表类型的数据，类似于压缩列表（ZipList）。ListPack 是 Redis 6.0 版本引入的新数据结构，用于优化列表数据的存储和操作效率。
 
@@ -578,7 +578,7 @@ ListPack 是Redis 中另一种特定的数据结构，用于存储列表类型�
 
 在 Redis 6 中，结构如下：
 
-image:../img/quicklist-001.png[]
+image::{image-dir}/quicklist-001.png[]
 
 在 Redis 7 中，使用 ListPack 代替了 ZipList
 

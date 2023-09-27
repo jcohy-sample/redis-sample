@@ -16,7 +16,7 @@ String、Hash、List、Set、SortedSet 等等。数据是存在内存中的，�
 
 总体功能概述
 
-image::../img/redis01.jpeg[]
+image::{image-dir}/redis01.jpeg[]
 
 [[redis-sign]]
 == Redis 的应用场景
@@ -31,7 +31,7 @@ image::../img/redis01.jpeg[]
 * 队列
 * 排行版 + 点赞
 
-image::../img/redis02.jpeg[]
+image::{image-dir}/redis02.jpeg[]
 
 [[redis-use]]
 == Redis 的安装

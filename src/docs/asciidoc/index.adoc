@@ -1,5 +1,6 @@
-[[java]]
+[[redis]]
 = Redis 指南
+:image-dir: {study-url}/redis/img
 
 ****
 作者网页:

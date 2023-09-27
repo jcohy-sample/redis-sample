@@ -3,7 +3,7 @@
 
 由于数据量过大，单个 Master 复制集难以承担，因此需要对多个复制集进行集群，形成水平扩展每个复制集只负责存储整个数据集的一部分，这就是 Redis 的集群，其作用是提供在多个 Redis 节点间共享数据的程序集。
 
-image::../img/cluster01.jpeg[]
+image::{image-dir}/cluster01.jpeg[]
 
 Redis 集群是一个提供在多个Redis节点间共享数据的程序集，Redis 集群可以支持多个 Master。Redis 集群有以下特性
 
@@ -24,7 +24,7 @@ Redis 集群没有使用一致性 hash 算法，而是引入了哈希槽的概�
 
 Redis 集群有 16384 个哈希槽，每个 key 通过 CRC16 校验后对 16484 取模来决定放置那个槽，集群的每个节点负责一部分 hash 槽。
 
-image::../img/cluster02.jpeg[]
+image::{image-dir}/cluster02.jpeg[]
 
 IMPORTANT:: Redis 的槽位有 16384 个，建议节点数量小于等于 1000
 
@@ -45,7 +45,7 @@ IMPORTANT:: Redis 的槽位有 16384 个，建议节点数量小于等于 1000
 
 `hash(key) % N` 个机器台数，计算出哈希值，用来决定数据映射到哪一个节点上。
 
-image::../img/cluster04.jpeg[]
+image::{image-dir}/cluster04.jpeg[]
 
 ===== 一致性哈希算法
 
@@ -56,29 +56,29 @@ image::../img/cluster04.jpeg[]
 如假设某哈希函数 H 的值空间为 `0-2^32-1`（即哈希值是一个 32 位无符号整形），整个哈希环如下图：整个空间按顺时针方向组织，圆环的正上方的点代表 0，0 点右侧的第一个点代表 1，以此类推，2、3、4、……直到 2^32-1，
 也就是说 0 点左侧的第一个点代表 `2^32-1`， 0 和 `2^32-1` 在零点中方向重合，我们把这个由 `2^32` 个点组成的圆环称为 Hash 环。
 
-image::../img/cluster05.jpeg[]
+image::{image-dir}/cluster05.jpeg[]
 
 节点映射，将集群中各个 IP 节点映射到环上的某一个位置。 将各个服务器使用 Hash 进行一个哈希，具体可以选择服务器的 IP 或主机名作为关键字进行哈希，这样每台机器就能确定其在哈希环上的位置。假如 4 个节点 NodeA、B、C、D，经过 IP 地址的哈希函数计算(hash(ip))， 使用 IP 地址哈希后在环空间的位置如下：
 
-image::../img/cluster06.jpeg[]
+image::{image-dir}/cluster06.jpeg[]
 
 key 落键规则：当我们需要存储一个 kv 键值对时，首先计算 key 的 hash 值，`hash(key)`，将这个 key 使用相同的 Hash 函数计算出哈希值并确定此数据在环上的位置，从此位置沿环顺时针 **行走**，第一台遇到的服务器就是其应该定位到的服务器，并将该键值对存储在该节点上。
 
 如我们有 `Object A、Object B、Object C、Object D` 四个数据对象，经过哈希计算后，在环空间上的位置如下：根据一致性 Hash 算法，数据 A 会被定为到 Node A 上，B 被定为到 Node B 上，C 被定为到 Node C 上，D 被定为到 Node D 上。
 
-image::../img/cluster07.jpeg[]
+image::{image-dir}/cluster07.jpeg[]
 
 一致性哈希算法的容错性：假设 Node C 宕机，可以看到此时对象 A、B、D 不会受到影响。一般的，在一致性 Hash 算法中，如果一台服务器不可用，则受影响的数据仅仅是此服务器到其环空间中前一台服务器（即沿着逆时针方向行走遇到的第一台服务器）之间数据，其它不会受到影响。简单说，就是 C 挂了，受到影响的只是 B、C 之间的数据且这些数据会转移到 D 进行存储。
 
-image::../img/cluster08.jpeg[]
+image::{image-dir}/cluster08.jpeg[]
 
 一致性哈希算法的扩展性：数据量增加了，需要增加一台节点 Node X，X 的位置在 A 和 B 之间，那收到影响的也就是 A 到 X 之间的数据，重新把A到X的数据录入到 X 上即可， 不会导致 hash 取余全部数据重新洗牌。
 
-image::../img/cluster09.jpeg[]
+image::{image-dir}/cluster09.jpeg[]
 
 Hash 环的数据倾斜问题：一致性 Hash 算法在服务节点太少时，容易因为节点分布不均匀而造成数据倾斜（被缓存的对象大部分集中缓存在某一台服务器上）问题， 例如系统中只有两台服务器：
 
-image::../img/cluster10.jpeg[]
+image::{image-dir}/cluster10.jpeg[]
 
 ===== 哈希槽分区
 
@@ -86,7 +86,7 @@ image::../img/cluster10.jpeg[]
 
 哈希槽实质就是一个数组，数组 `[0,2^14 -1]` 形成 hash slot 空间。
 
-image::../img/cluster11.jpeg[]
+image::{image-dir}/cluster11.jpeg[]
 
 一个集群只能有 16384 个槽，编号 `0-16383（0-2^14-1）`。这些槽会分配给集群中的所有主节点，分配策略没有要求。
 
@@ -129,7 +129,7 @@ Redis 主节点的配置信息中它所负责的哈希槽是通过一张 bitmap 
 如果节点数很少，而哈希槽数量很多的话，bitmap 的压缩率就很低。
 
 
-image::../img/cluster12.jpeg[]
+image::{image-dir}/cluster12.jpeg[]
 
 ===== 优缺点
 
@@ -178,4 +178,4 @@ NOTE:: Redis 集群不保证强一致性，这意味着在特定的条件下，R
 * 集群扩容：在重新分派槽号后，使用均匀分配，即从其他节点各自分一些出来给新加入的节点
 * 不在同一个 slot 槽位下的键值无法使用 `mset`、`mget` 等多键操作。可以通过 `{}` 来定义同一个组的概念，使 key 中 `{}` 内相同内容的键值对放到一个 slot 槽位去，对照下图类似 k1 k2 k3 都映射为 x，自然槽位一样
 +
-image::../img/cluster13.jpeg[]
+image::{image-dir}/cluster13.jpeg[]

@@ -19,7 +19,7 @@ cat /tmp/redidTest.txt | redis-cli -h 127.0.0.1 -p 6379 -a 111111 --pipe
 
 我们使用 `keys *` 命令看看 1000w 条数据遍历需要花费多长时间
 
-image::../img/bigkey01.jpg[]
+image::{image-dir}/bigkey01.jpg[]
 
 [IMPORTANT]
 ====
@@ -28,9 +28,9 @@ image::../img/bigkey01.jpg[]
 
 通过配置文件设置禁用这些命令，在 `redis.conf` 中的 <<redis-conf-security>> 这一块配置。
 
-image::../img/bigkey02.jpg[]
+image::{image-dir}/bigkey02.jpg[]
 
-image::../img/bigkey03.jpg[]
+image::{image-dir}/bigkey03.jpg[]
 ====
 
 我们可以使用 `scan` 命令来迭代数据库中的数据.scan 命令基本语法如下
@@ -65,9 +65,9 @@ bigkey 过期时间自动删除问题（例如一个 200 万的 zset 设置 1 �
 
 使用 `--bigkeys` 和 `memory usage`  来查询 bigkey。
 
-image::../img/bigkey04.jpg[]
+image::{image-dir}/bigkey04.jpg[]
 
-image::../img/bigkey05.jpg[]
+image::{image-dir}/bigkey05.jpg[]
 
 ==== BigKey 删除
 

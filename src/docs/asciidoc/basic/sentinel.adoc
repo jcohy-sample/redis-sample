@@ -82,7 +82,7 @@ ODOWN 需要一定数量的 sentinel，多个哨兵达成一致意见才能认�
 
 masterName 是对某个 master+slave 组合的一个区分标识(一套 sentinel 可以监听多组 master+slave 这样的组合)
 
-image::../img/sentinel01.jpeg[]
+image::{image-dir}/sentinel01.jpeg[]
 
 **quorum** 这个参数是进行客观下线的一个依据，法定人数/法定票数
 意思是至少有 `quorum` 个 sentinel 认为这个 master 有故障才会对这个 master 进行下线以及故障转移。因为有的时候，某个 sentinel 节点可能因为自身网络原因导致无法连接 master，而此时 master 并没有出现故障，
@@ -92,12 +92,12 @@ image::../img/sentinel01.jpeg[]
 
 . 当主节点被判断客观下线以后，各个哨兵节点会进行协商， 先选举出一个领导者哨兵节点（兵王）并由该领导者节点， 也即被选举出的兵王进行 failover（故障迁移），哨兵领导者是通过 Raft 算法选举出来的
 +
-image::../img/sentinel02.jpeg[]
+image::{image-dir}/sentinel02.jpeg[]
 +
 监视该主节点的所有哨兵都有可能被选为领导者，选举使用的算法是 Raft 算法；Raft 算法的基本思路是先到先得： 即在一轮选举中，哨兵 A 向 B 发送成为领导者的申请，如果 B 没有同意过其他哨兵，则会同意 A 成为领导者。
 . 由哨兵领导者选出新的 master 节点，选举规则如下：
 +
-image::../img/sentinel03.jpeg[]
+image::{image-dir}/sentinel03.jpeg[]
 +
 * `redis.conf` 文件中，优先级 `slave-priority` 或者 `replica-priority` 最高的从节点(数字越小优先级越高)
 * 复制偏移位置 offset 最大的从节点。偏移量是指获得原主数据最多的。
