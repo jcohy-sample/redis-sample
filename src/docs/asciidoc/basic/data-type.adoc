@@ -274,7 +274,7 @@ image::{image-dir}/redis04.jpeg[]
 * 统计指定用户一年之中的登录次数
 * 某用户一年 365 天，那几天登录过，那几天没有登录。全年共计登录天数。
 
-<<redis-bloom-filter>>
+<<bloomfilter#redis-bloom-filter>>
 
 
 [[redis-data-type-bitfield]]

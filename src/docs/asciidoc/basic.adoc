@@ -1,0 +1,27 @@
+[[redis-basic]]
+= Redis 基础篇
+
+include::basic/overview.adoc[]
+
+include::basic/feature.adoc[]
+
+include::basic/data-type.adoc[]
+
+include::basic/persistence.adoc[]
+
+include::basic/transaction.adoc[]
+
+include::basic/pipelining.adoc[]
+
+include::basic/subpub.adoc[]
+
+include::basic/replica.adoc[]
+
+include::basic/sentinel.adoc[]
+
+include::basic/cluster.adoc[]
+
+include::basic/client.adoc[]
+
+include::basic/conf.adoc[]
+
